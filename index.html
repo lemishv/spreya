@@ -1835,6 +1835,15 @@ function loadState() {
     if (Array.isArray(data.varieties)) state.varieties = data.varieties;
     if (Array.isArray(data.containerKinds) && data.containerKinds.length > 0) state.containerKinds = data.containerKinds;
     if (Array.isArray(data.sizes) && data.sizes.length > 0) state.sizes = data.sizes;
+    if (data.timer && typeof data.timer === 'object') {
+      state.timer.running = !!data.timer.running;
+      state.timer.startMs = (typeof data.timer.startMs === 'number') ? data.timer.startMs : null;
+      state.timer.elapsedMs = (typeof data.timer.elapsedMs === 'number') ? data.timer.elapsedMs : 0;
+      // If timer was running when app was closed/killed, recompute elapsed from wall-clock.
+      if (state.timer.running && state.timer.startMs) {
+        state.timer.elapsedMs = Date.now() - state.timer.startMs;
+      }
+    }
   } catch (e) { console.warn('load failed', e); }
 }
 
@@ -1848,7 +1857,8 @@ function saveState() {
     sessions: state.sessions,
     varieties: state.varieties,
     containerKinds: state.containerKinds,
-    sizes: state.sizes
+    sizes: state.sizes,
+    timer: state.timer
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
@@ -2203,6 +2213,23 @@ function renderPreparations() {
   });
 }
 
+// Wake Lock: keep screen on while stopwatch is running.
+var wakeLock = null;
+function acquireWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  if (document.visibilityState !== 'visible') return;
+  navigator.wakeLock.request('screen').then(function(lock) {
+    wakeLock = lock;
+    lock.addEventListener('release', function() { wakeLock = null; });
+  }).catch(function(e) { /* ignore — not critical */ });
+}
+function releaseWakeLock() {
+  if (wakeLock) {
+    try { wakeLock.release(); } catch (e) {}
+    wakeLock = null;
+  }
+}
+
 function startTimer() {
   var isResume = state.timer.elapsedMs > 0;
   if (!isResume) {
@@ -2212,7 +2239,10 @@ function startTimer() {
   state.timer.running = true;
   state.timer.startMs = Date.now() - state.timer.elapsedMs;
   vibrate(50);
+  clearInterval(timerInterval);
   timerInterval = setInterval(tickTimer, 100);
+  acquireWakeLock();
+  saveState();
   renderTimer();
   renderStreams();
   updateSpeedDisplay();
@@ -2221,6 +2251,8 @@ function startTimer() {
 function stopTimer() {
   state.timer.running = false;
   clearInterval(timerInterval);
+  releaseWakeLock();
+  saveState();
   vibrate([60, 60, 60]);
   renderTimer();
 }
@@ -2229,14 +2261,23 @@ function resetTimer() {
   state.timer = { running: false, startMs: null, elapsedMs: 0 };
   state.streams = [];
   clearInterval(timerInterval);
+  releaseWakeLock();
+  saveState();
   renderTimer();
   renderStreams();
   updateSpeedDisplay();
 }
 
+// Throttle saving the running timer to localStorage (once per ~3 s).
+var lastTimerSaveMs = 0;
 function tickTimer() {
   state.timer.elapsedMs = Date.now() - state.timer.startMs;
   document.getElementById('timerDisplay').textContent = fmtTime(state.timer.elapsedMs);
+  var now = Date.now();
+  if (now - lastTimerSaveMs > 3000) {
+    lastTimerSaveMs = now;
+    saveState();
+  }
 }
 
 // ── SESSION ─────────────────────────────────────────────────────────────────
@@ -3863,6 +3904,27 @@ function init() {
   renderPreparations();
   updateSpeedDisplay();
   renderSessionEntry();
+
+  // If stopwatch was running when app was closed/backgrounded — resume it.
+  if (state.timer.running && state.timer.startMs) {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(tickTimer, 100);
+    acquireWakeLock();
+    renderTimer();
+  }
+
+  // When the screen comes back on / tab becomes visible again:
+  //   1. Repaint immediately (don't wait up to 100 ms for next tick).
+  //   2. Re-acquire wake lock (it auto-releases when tab is hidden).
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState !== 'visible') return;
+    if (state.timer.running && state.timer.startMs) {
+      state.timer.elapsedMs = Date.now() - state.timer.startMs;
+      var d = document.getElementById('timerDisplay');
+      if (d) d.textContent = fmtTime(state.timer.elapsedMs);
+      acquireWakeLock();
+    }
+  });
 
   // If session is active and was paused-by-app-close (not user-paused),
   // continue running. Persistent timer recovers correctly.
