@@ -138,11 +138,59 @@
   }
 
   .speed-display {
-    text-align: center;
-    padding: 24px 0 8px;
+    display: flex;
+    align-items: center;
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
     margin: 24px 0;
+    overflow: hidden;
+  }
+  .speed-manual-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 12px;
+    border-right: 1px solid var(--border);
+    gap: 6px;
+  }
+  .speed-manual-col input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--teal);
+    color: var(--teal);
+    font-family: var(--mono);
+    font-size: 20px;
+    padding: 10px 8px;
+    border-radius: 6px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    -moz-appearance: textfield;
+  }
+  .speed-manual-col input::-webkit-outer-spin-button,
+  .speed-manual-col input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .speed-manual-col input:focus { outline: none; border-color: var(--teal); }
+  .speed-manual-col .speed-manual-unit {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--teal);
+  }
+  .speed-collected {
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+  .speed-result-col {
+    flex: 2;
+    text-align: center;
+    padding: 20px 12px;
   }
   .speed-display .num {
     font-family: var(--serif);
@@ -166,7 +214,7 @@
     font-family: var(--mono);
     font-size: 13px;
     color: var(--text-dim);
-    margin-top: 12px;
+    margin-top: 8px;
     font-variant-numeric: tabular-nums;
   }
 
@@ -177,18 +225,43 @@
     padding: 20px;
   }
   .timer-display {
-    font-family: var(--serif);
+    font-family: var(--mono);
     font-weight: 500;
     font-size: 48px;
     line-height: 1;
     text-align: center;
     color: var(--text);
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
-    margin-bottom: 18px;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
   }
   .timer-display.idle { color: var(--text-faint); }
   .timer-display.running { color: var(--amber); }
+
+  .lap-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 7px 14px;
+    background: var(--surface-2);
+    border-radius: 6px;
+  }
+  .lap-display-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .lap-display-time {
+    font-family: var(--mono);
+    font-size: 22px;
+    color: var(--teal);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+  }
 
   .btn {
     display: block;
@@ -538,7 +611,50 @@
     text-transform: uppercase;
   }
 
-  .prep-edit { display: flex; flex-direction: column; gap: 10px; }
+  .prep-reverse {
+    margin-top: 10px;
+    margin-left: 32px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .prep-reverse input {
+    width: 80px;
+    background: var(--bg);
+    border: 1px solid var(--teal);
+    color: var(--teal);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 6px 8px;
+    border-radius: 5px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    -moz-appearance: textfield;
+  }
+  .prep-reverse input::-webkit-outer-spin-button,
+  .prep-reverse input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .prep-reverse input:focus { outline: none; border-color: var(--teal); }
+  .prep-reverse .rev-unit {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .prep-reverse .rev-arrow { color: var(--text-faint); font-size: 13px; }
+  .prep-reverse .rev-result {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--teal);
+    font-variant-numeric: tabular-nums;
+  }
+  .prep-reverse .rev-result-unit {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
   .prep-edit input {
     background: var(--bg);
     border: 1px solid var(--border-strong);
@@ -727,10 +843,19 @@
     flex: 1;
     min-width: 0;
   }
-  .ctype-name {
+  .ctype-size {
     font-family: var(--serif);
-    font-size: 16px;
-    color: var(--text);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--teal);
+    margin-bottom: 2px;
+  }
+  .ctype-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
   }
   .ctype-meta {
     font-size: 11px;
@@ -1361,6 +1486,7 @@
     border-radius: 4px;
     cursor: pointer;
     user-select: none;
+    position: relative;
   }
   .chip.selected {
     background: var(--amber);
@@ -1373,6 +1499,15 @@
     border: 1px dashed var(--border-strong);
     color: var(--text-faint);
   }
+  .chip-remove {
+    display: inline-block;
+    margin-left: 5px;
+    font-size: 11px;
+    opacity: 0.5;
+    line-height: 1;
+    vertical-align: middle;
+  }
+  .chip-remove:active { opacity: 1; color: var(--danger); }
 
   /* Delete button in modal */
   .modal-delete-btn {
@@ -1534,7 +1669,16 @@
   <h2 data-i18n="potatoSpeed">Швидкість картоплі</h2>
 
   <div class="timer-block">
-    <div class="timer-display idle" id="timerDisplay">00:00.0</div>
+    <div class="timer-display idle" id="timerDisplay">00:00:00</div>
+    <div class="lap-display hidden" id="lapDisplay">
+      <span class="lap-display-label">КОЛО</span>
+      <span class="lap-display-time" id="lapTime">00:00:00</span>
+    </div>
+
+    <div class="btn-row" style="margin-bottom:14px;">
+      <button class="btn btn-primary" id="timerBtn" data-i18n="start">СТАРТ</button>
+      <button class="btn btn-secondary hidden" id="resetBtn" data-i18n="reset" style="flex:0 0 44%;">Скинути</button>
+    </div>
 
     <div class="streams">
       <div class="streams-label" data-i18n="streamsLabel">Ваги ємкостей</div>
@@ -1543,27 +1687,18 @@
       <div class="stream-total">
         <span class="label" data-i18n="totalDelta">Набрано</span>
         <span class="value"><span id="streamTotal">0</span> <span data-i18n="kg">кг</span></span>
-      </div>
-    </div>
-
-    <div style="margin-top:14px;">
-      <button class="btn btn-primary" id="timerBtn" data-i18n="start">СТАРТ</button>
-      <div class="btn-row">
-        <button class="btn btn-secondary hidden" id="resetBtn" data-i18n="reset">Скинути</button>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+          <input type="number" id="manualSpeedVis" inputmode="decimal" placeholder="0" style="width:70px;background:var(--bg);border:1px solid var(--teal);color:var(--teal);font-family:var(--mono);font-size:14px;padding:4px 8px;border-radius:5px;text-align:center;font-variant-numeric:tabular-nums;-moz-appearance:textfield;outline:none;">
+          <span style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--teal);font-family:var(--mono);" data-i18n="kgPerMin">кг/хв</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="manual-block">
-    <label data-i18n="orManually">Або вручну</label>
-    <div class="manual-row">
-      <input type="number" id="manualSpeed" inputmode="decimal" placeholder="0">
-      <span class="unit-tag" data-i18n="kgPerMin">кг/хв</span>
-    </div>
-  </div>
+  <input type="number" id="manualSpeed" inputmode="decimal" placeholder="0" style="display:none">
 </section>
 
-<div class="speed-display">
+<div class="speed-display" style="display:block;text-align:center;padding:20px 0 16px;">
   <div class="num zero" id="speedNum">0</div>
   <div class="unit" data-i18n="kgPerMin">кг/хв</div>
   <div class="secondary"><span id="speedHour">0</span> <span data-i18n="kgPerHour">кг/год</span></div>
@@ -1591,14 +1726,16 @@ var T = {
     title: 'Спрея',
     potatoSpeed: 'Швидкість картоплі',
     start: 'СТАРТ',
-    stop: 'СТОП',
+    stop: 'КОЛО',
+    lap: 'КОЛО',
     reset: 'Скинути',
-    streamsLabel: 'Ваги ємкостей',
-    addStream: '+ Додати потік',
+    streamsLabel: 'Ваги',
+    addStream: '+ Додати ваги',
     totalDelta: 'Набрано',
     before: 'Було',
     after: 'Стало',
     orManually: 'Або вручну',
+    sprayerSpeed: 'Швидкість спреї',
     kg: 'кг',
     kgPerMin: 'кг/хв',
     kgPerHour: 'кг/год',
@@ -1624,14 +1761,14 @@ var T = {
     sessionNumber: 'Сесія №',
     variety: 'Сорт',
     varietyPlaceholder: 'напр. Бельмонда',
-    containerType: 'Тип ємкості',
+    containerType: 'Ваги',
     containerLabel: 'Підпис',
     containerLabelPlaceholder: 'напр. Ящик',
     weight: 'Вага',
-    addContainerType: '+ Додати тип',
+    addContainerType: '+ Додати ваги',
     selectPrepsForSession: 'Препарати в цій сесії',
     startSessionBtn: 'СТАРТ СЕСІЇ',
-    cancelSessionBtn: 'Скасувати',
+    cancelSessionBtn: '← Назад',
     needContainer: 'Додайте хоча б один тип ємкості',
     pcs: 'шт',
     addContainerEvent: '+1',
@@ -1683,14 +1820,16 @@ var T = {
     title: 'Spreya',
     potatoSpeed: 'Potato throughput',
     start: 'START',
-    stop: 'STOP',
+    stop: 'LAP',
+    lap: 'LAP',
     reset: 'Reset',
-    streamsLabel: 'Container weights',
-    addStream: '+ Add stream',
+    streamsLabel: 'Weights',
+    addStream: '+ Add weights',
     totalDelta: 'Added',
     before: 'Before',
     after: 'After',
     orManually: 'Or manually',
+    sprayerSpeed: 'Sprayer speed',
     kg: 'kg',
     kgPerMin: 'kg/min',
     kgPerHour: 'kg/h',
@@ -1716,14 +1855,14 @@ var T = {
     sessionNumber: 'Session #',
     variety: 'Variety',
     varietyPlaceholder: 'e.g. Belmonda',
-    containerType: 'Container type',
+    containerType: 'Weights',
     containerLabel: 'Label',
     containerLabelPlaceholder: 'e.g. Crate',
     weight: 'Weight',
-    addContainerType: '+ Add type',
+    addContainerType: '+ Add weights',
     selectPrepsForSession: 'Treatments in this session',
     startSessionBtn: 'START SESSION',
-    cancelSessionBtn: 'Cancel',
+    cancelSessionBtn: '← Back',
     needContainer: 'Add at least one container type',
     pcs: 'pcs',
     addContainerEvent: '+1',
@@ -1783,7 +1922,7 @@ var state = {
   preparations: [
     { id: 1, name: 'MAXIM', norm: 250, canVolume: 5, active: true }
   ],
-  timer: { running: false, startMs: null, elapsedMs: 0 },
+  timer: { running: false, startMs: null, elapsedMs: 0, frozenElapsedMs: 0, lastLapMs: 0 },
   streams: [],
   editingPrepId: null,
   view: 'main',
@@ -1834,11 +1973,17 @@ function loadState() {
     }
     if (Array.isArray(data.varieties)) state.varieties = data.varieties;
     if (Array.isArray(data.containerKinds) && data.containerKinds.length > 0) state.containerKinds = data.containerKinds;
+    // Permanent kinds are always available
+    PERMANENT_KINDS.forEach(function(k) {
+      if (state.containerKinds.indexOf(k) === -1) state.containerKinds.push(k);
+    });
     if (Array.isArray(data.sizes) && data.sizes.length > 0) state.sizes = data.sizes;
     if (data.timer && typeof data.timer === 'object') {
       state.timer.running = !!data.timer.running;
       state.timer.startMs = (typeof data.timer.startMs === 'number') ? data.timer.startMs : null;
       state.timer.elapsedMs = (typeof data.timer.elapsedMs === 'number') ? data.timer.elapsedMs : 0;
+      state.timer.frozenElapsedMs = (typeof data.timer.frozenElapsedMs === 'number') ? data.timer.frozenElapsedMs : 0;
+      state.timer.lastLapMs = (typeof data.timer.lastLapMs === 'number') ? data.timer.lastLapMs : 0;
       // If timer was running when app was closed/killed, recompute elapsed from wall-clock.
       if (state.timer.running && state.timer.startMs) {
         state.timer.elapsedMs = Date.now() - state.timer.startMs;
@@ -1894,11 +2039,11 @@ function fmtMinutesAsHM(minutes) {
 }
 
 function fmtTime(ms) {
-  var total = Math.floor(ms / 100);
-  var tenths = total % 10;
-  var seconds = Math.floor(total / 10) % 60;
-  var minutes = Math.floor(total / 600);
-  return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0') + '.' + tenths;
+  var totalSec = Math.floor(ms / 1000);
+  var h = Math.floor(totalSec / 3600);
+  var m = Math.floor((totalSec % 3600) / 60);
+  var s = totalSec % 60;
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
 }
 
 function escapeHtml(s) {
@@ -1924,7 +2069,7 @@ function streamsTotal() {
 
 function calculatedSpeed() {
   var total = streamsTotal();
-  var minutes = state.timer.elapsedMs / 60000;
+  var minutes = state.timer.frozenElapsedMs / 60000;
   if (total <= 0 || minutes <= 0) return null;
   return total / minutes;
 }
@@ -1951,26 +2096,31 @@ function renderI18n() {
 
 function renderTimer() {
   var display = document.getElementById('timerDisplay');
+  var lapEl = document.getElementById('lapDisplay');
+  var lapTimeEl = document.getElementById('lapTime');
   var btn = document.getElementById('timerBtn');
   var reset = document.getElementById('resetBtn');
 
   display.textContent = fmtTime(state.timer.elapsedMs);
 
+  // Малий дисплей — показуємо тільки коли є зафіксований лап
+  if (state.timer.frozenElapsedMs > 0 && lapEl && lapTimeEl) {
+    lapEl.classList.remove('hidden');
+    lapTimeEl.textContent = fmtTime(state.timer.frozenElapsedMs);
+  } else if (lapEl) {
+    lapEl.classList.add('hidden');
+  }
+
   if (state.timer.running) {
     display.className = 'timer-display running';
-    btn.textContent = tr('stop');
+    btn.textContent = tr('lap');
     btn.className = 'btn btn-stop';
-    reset.classList.add('hidden');
-  } else if (state.timer.elapsedMs > 0) {
-    display.className = 'timer-display';
-    btn.textContent = tr('resume');
-    btn.className = 'btn btn-primary';
     reset.classList.remove('hidden');
   } else {
-    display.className = 'timer-display idle';
+    display.className = state.timer.elapsedMs > 0 ? 'timer-display' : 'timer-display idle';
     btn.textContent = tr('start');
     btn.className = 'btn btn-primary';
-    reset.classList.add('hidden');
+    reset.classList.toggle('hidden', state.timer.elapsedMs === 0 && state.timer.frozenElapsedMs === 0);
   }
 }
 
@@ -2099,12 +2249,32 @@ function updateSpeedDisplay() {
 }
 
 function renderManualInput() {
-  var input = document.getElementById('manualSpeed');
-  if (state.manualSpeed > 0) input.value = state.manualSpeed;
+  var hidden = document.getElementById('manualSpeed');
+  var vis = document.getElementById('manualSpeedVis');
+  if (state.manualSpeed > 0) {
+    if (hidden) hidden.value = state.manualSpeed;
+    if (vis && document.activeElement !== vis) vis.value = state.manualSpeed;
+  } else {
+    if (vis && document.activeElement !== vis) vis.value = '';
+  }
 }
 
 function renderPreparations() {
   var list = document.getElementById('prepList');
+  // Якщо кнопка видалення вже "зведена" — не перестворювати картки,
+  // щоб не скидати стан підтвердження.
+  if (list.querySelector('.prep-action-btn.armed')) {
+    // Тільки оновлюємо числа в існуючих картках
+    var speed = currentSpeed();
+    list.querySelectorAll('.prep-card').forEach(function(card, idx) {
+      var prep = state.preparations[idx];
+      if (!prep) return;
+      var mlMin = (speed > 0 && prep.active) ? speed * prep.norm / 1000 : null;
+      var mlEl = card.querySelector('.ml-min');
+      if (mlEl) mlEl.textContent = mlMin !== null ? fmtNum(mlMin, mlMin < 100 ? 1 : 0) : '—';
+    });
+    return;
+  }
   list.innerHTML = '';
   var speed = currentSpeed();
 
@@ -2168,13 +2338,12 @@ function renderPreparations() {
       var dispHtml = '';
       dispHtml += '<div class="prep-head">';
       dispHtml += '<div class="prep-checkbox ' + (prep.active ? 'checked' : '') + '" data-action="toggle"></div>';
-      dispHtml += '<div class="prep-name">' + escapeHtml(prep.name) + '</div>';
+      dispHtml += '<div class="prep-name">' + escapeHtml(prep.name) + '<span style="font-family:var(--mono);font-size:12px;font-weight:400;color:var(--text-dim);margin-left:8px;letter-spacing:0;">' + fmtNum(prep.norm, 0) + ' ' + tr('mlPerTon') + '</span></div>';
       dispHtml += '<div class="prep-actions">';
       dispHtml += '<button class="prep-action-btn" data-action="edit">✎</button>';
       dispHtml += '<button class="prep-action-btn del" data-action="delete">✕</button>';
       dispHtml += '</div>';
       dispHtml += '</div>';
-      dispHtml += '<div class="prep-norm">' + fmtNum(prep.norm, 1) + ' ' + tr('mlPerTon') + '</div>';
       var minPerLiter = (mlMin && mlMin > 0) ? 1000 / mlMin : null;
       var rtText = minPerLiter !== null ? fmtMinutesAsHM(minPerLiter) : '—';
       var rtDimmed = minPerLiter === null ? 'dimmed' : '';
@@ -2189,7 +2358,26 @@ function renderPreparations() {
       dispHtml += '<span>' + rtText + '</span>';
       dispHtml += '</div>';
       dispHtml += '</div>';
+      dispHtml += '<div class="prep-reverse">';
+      dispHtml += '<input type="number" inputmode="decimal" placeholder="0" data-role="revMl" data-prep-id="' + prep.id + '">';
+      dispHtml += '<span class="rev-unit">' + tr('mlPerMin') + '</span>';
+      dispHtml += '<span class="rev-arrow">→</span>';
+      dispHtml += '<span class="rev-result" data-role="revResult">—</span>';
+      dispHtml += '<span class="rev-result-unit">' + tr('kgPerHour') + '</span>';
+      dispHtml += '</div>';
       card.innerHTML = dispHtml;
+
+      card.querySelector('[data-role="revMl"]').addEventListener('input', function(e) {
+        var ml = Number(e.target.value) || 0;
+        var resultEl = card.querySelector('[data-role="revResult"]');
+        if (ml > 0 && prep.norm > 0) {
+          var kgPerMin = ml * 1000 / prep.norm;
+          var kgPerHour = kgPerMin * 60;
+          resultEl.textContent = fmtNum(kgPerHour, 0);
+        } else {
+          resultEl.textContent = '—';
+        }
+      });
 
       card.querySelector('[data-action="toggle"]').addEventListener('click', function() {
         prep.active = !prep.active;
@@ -2200,12 +2388,10 @@ function renderPreparations() {
         state.editingPrepId = prep.id;
         renderPreparations();
       });
-      card.querySelector('[data-action="delete"]').addEventListener('click', function() {
-        if (confirm(tr('deleteQ') + ' «' + prep.name + '»')) {
-          state.preparations = state.preparations.filter(function(p) { return p.id !== prep.id; });
-          saveState();
-          renderPreparations();
-        }
+      armConfirmButton(card.querySelector('[data-action="delete"]'), function() {
+        state.preparations = state.preparations.filter(function(p) { return p.id !== prep.id; });
+        saveState();
+        renderPreparations();
       });
     }
 
@@ -2231,13 +2417,12 @@ function releaseWakeLock() {
 }
 
 function startTimer() {
-  var isResume = state.timer.elapsedMs > 0;
-  if (!isResume) {
-    state.streams.forEach(function(s) { s.after = ''; });
-    state.timer.elapsedMs = 0;
-  }
+  state.timer.elapsedMs = 0;
+  state.timer.lastLapMs = 0;
+  state.timer.frozenElapsedMs = 0;
   state.timer.running = true;
-  state.timer.startMs = Date.now() - state.timer.elapsedMs;
+  state.timer.startMs = Date.now();
+  state.streams.forEach(function(s) { s.after = ''; });
   vibrate(50);
   clearInterval(timerInterval);
   timerInterval = setInterval(tickTimer, 100);
@@ -2248,17 +2433,18 @@ function startTimer() {
   updateSpeedDisplay();
 }
 
-function stopTimer() {
-  state.timer.running = false;
-  clearInterval(timerInterval);
-  releaseWakeLock();
+function lapTimer() {
+  if (state.timer.elapsedMs < 500) return; // захист від випадкового тапу
+  // Split time = повний час від старту до цього моменту.
+  state.timer.frozenElapsedMs = state.timer.elapsedMs;
+  vibrate([40, 40, 80]);
   saveState();
-  vibrate([60, 60, 60]);
   renderTimer();
+  updateSpeedDisplay();
 }
 
 function resetTimer() {
-  state.timer = { running: false, startMs: null, elapsedMs: 0 };
+  state.timer = { running: false, startMs: null, elapsedMs: 0, frozenElapsedMs: 0, lastLapMs: 0 };
   state.streams = [];
   clearInterval(timerInterval);
   releaseWakeLock();
@@ -2284,6 +2470,7 @@ function tickTimer() {
 
 var sessionTicker = null;
 var SESSION_PRESETS = [1000, 1100, 1250];
+var PERMANENT_KINDS = ['Bag', 'Box'];
 
 function uid() {
   return Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
@@ -2942,11 +3129,13 @@ function renderSessionActive(root) {
   s.containerTypes.forEach(function(t) {
     var cnt = containerCount(t.id);
     var kg = cnt * t.weight;
-    var sizeLabel = t.size ? ' · ' + escapeHtml(t.size) : '';
 
     html += '<div class="ctype-row" data-ctype-id="' + t.id + '">';
     html += '<div class="ctype-info">';
-    html += '<div class="ctype-name">' + escapeHtml(t.kind) + ' ' + fmtNum(t.weight) + ' ' + tr('kg') + sizeLabel + '</div>';
+    if (t.size) {
+      html += '<div class="ctype-size">' + escapeHtml(t.size) + '</div>';
+    }
+    html += '<div class="ctype-name">' + escapeHtml(t.kind) + ' ' + fmtNum(t.weight) + ' ' + tr('kg') + '</div>';
     html += '<div class="ctype-meta">' + cnt + ' ' + tr('pcs') + ' · ' + fmtNum(kg) + ' ' + tr('kg') + '</div>';
     html += '</div>';
     html += '<div class="ctype-count">' + cnt + '</div>';
@@ -3439,19 +3628,38 @@ function renderContainerModal(backdrop) {
   html += '<button class="modal-close" data-action="close">✕</button>';
   html += '</div>';
 
-  // Kind chips
+  // Size chips — ПЕРШИМИ
+  html += '<div class="modal-section">';
+  html += '<label class="modal-label">' + tr('size') + '</label>';
+  html += '<div class="chip-row" data-role="sizeChips">';
+  state.sizes.forEach(function(sz) {
+    var sel = m.draft.size === sz ? 'selected' : '';
+    html += '<button class="chip ' + sel + '" data-size="' + escapeHtml(sz) + '">'
+      + escapeHtml(sz)
+      + '<span class="chip-remove" data-remove-size="' + escapeHtml(sz) + '">×</span>'
+      + '</button>';
+  });
+  html += '<button class="chip chip-add" data-action="addSize">+</button>';
+  html += '</div>';
+  html += '</div>';
+
+  // Kind chips — ДРУГИМИ
   html += '<div class="modal-section">';
   html += '<label class="modal-label">' + tr('kind') + '</label>';
   html += '<div class="chip-row" data-role="kindChips">';
   state.containerKinds.forEach(function(k) {
     var sel = m.draft.kind === k ? 'selected' : '';
-    html += '<button class="chip ' + sel + '" data-kind="' + escapeHtml(k) + '">' + escapeHtml(k) + '</button>';
+    var isPermanent = PERMANENT_KINDS.indexOf(k) !== -1;
+    html += '<button class="chip ' + sel + '" data-kind="' + escapeHtml(k) + '">'
+      + escapeHtml(k)
+      + (isPermanent ? '' : '<span class="chip-remove" data-remove-kind="' + escapeHtml(k) + '">×</span>')
+      + '</button>';
   });
   html += '<button class="chip chip-add" data-action="addKind">+</button>';
   html += '</div>';
   html += '</div>';
 
-  // Weight
+  // Weight — ТРЕТЬОЮ
   html += '<div class="modal-section">';
   html += '<label class="modal-label">' + tr('weight') + '</label>';
   html += '<div class="modal-row">';
@@ -3462,20 +3670,6 @@ function renderContainerModal(backdrop) {
   SESSION_PRESETS.forEach(function(p) {
     html += '<button class="chip" data-weight-preset="' + p + '">' + p + '</button>';
   });
-  html += '</div>';
-  html += '</div>';
-
-  // Size chips
-  html += '<div class="modal-section">';
-  html += '<label class="modal-label">' + tr('size') + '</label>';
-  html += '<div class="chip-row" data-role="sizeChips">';
-  var noneSel = m.draft.size === '' ? 'selected' : '';
-  html += '<button class="chip ' + noneSel + '" data-size="">' + tr('sizeNone') + '</button>';
-  state.sizes.forEach(function(sz) {
-    var sel = m.draft.size === sz ? 'selected' : '';
-    html += '<button class="chip ' + sel + '" data-size="' + escapeHtml(sz) + '">' + escapeHtml(sz) + '</button>';
-  });
-  html += '<button class="chip chip-add" data-action="addSize">+</button>';
   html += '</div>';
   html += '</div>';
 
@@ -3536,11 +3730,23 @@ function attachContainerModalHandlers(modal, isNew, t) {
 
   // Kind chips
   modal.querySelectorAll('[data-kind]').forEach(function(el) {
-    el.addEventListener('click', function() {
+    el.addEventListener('click', function(e) {
+      if (e.target.closest('[data-remove-kind]')) return; // handled below
       m.draft.kind = el.getAttribute('data-kind');
       modal.querySelectorAll('[data-kind]').forEach(function(b) {
         b.classList.toggle('selected', b.getAttribute('data-kind') === m.draft.kind);
       });
+    });
+  });
+
+  modal.querySelectorAll('[data-remove-kind]').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var name = el.getAttribute('data-remove-kind');
+      state.containerKinds = state.containerKinds.filter(function(k) { return k !== name; });
+      if (m.draft.kind === name) m.draft.kind = state.containerKinds[0] || '';
+      saveState();
+      renderModal();
     });
   });
 
@@ -3571,11 +3777,23 @@ function attachContainerModalHandlers(modal, isNew, t) {
 
   // Size chips
   modal.querySelectorAll('[data-size]').forEach(function(el) {
-    el.addEventListener('click', function() {
+    el.addEventListener('click', function(e) {
+      if (e.target.closest('[data-remove-size]')) return;
       m.draft.size = el.getAttribute('data-size');
       modal.querySelectorAll('[data-size]').forEach(function(b) {
         b.classList.toggle('selected', b.getAttribute('data-size') === m.draft.size);
       });
+    });
+  });
+
+  modal.querySelectorAll('[data-remove-size]').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var name = el.getAttribute('data-remove-size');
+      state.sizes = state.sizes.filter(function(s) { return s !== name; });
+      if (m.draft.size === name) m.draft.size = '';
+      saveState();
+      renderModal();
     });
   });
 
@@ -3969,7 +4187,7 @@ function init() {
   });
 
   document.getElementById('timerBtn').addEventListener('click', function() {
-    if (state.timer.running) stopTimer();
+    if (state.timer.running) lapTimer();
     else startTimer();
   });
 
@@ -3984,6 +4202,14 @@ function init() {
 
   document.getElementById('manualSpeed').addEventListener('input', function(e) {
     state.manualSpeed = Number(e.target.value) || 0;
+    saveState();
+    updateSpeedDisplay();
+  });
+
+  document.getElementById('manualSpeedVis').addEventListener('input', function(e) {
+    state.manualSpeed = Number(e.target.value) || 0;
+    var hidden = document.getElementById('manualSpeed');
+    if (hidden) hidden.value = state.manualSpeed || '';
     saveState();
     updateSpeedDisplay();
   });
