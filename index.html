@@ -1989,6 +1989,9 @@ function loadState() {
         state.timer.elapsedMs = Date.now() - state.timer.startMs;
       }
     }
+    if (Array.isArray(data.streams) && data.streams.length > 0) {
+      state.streams = data.streams;
+    }
   } catch (e) { console.warn('load failed', e); }
 }
 
@@ -2003,7 +2006,8 @@ function saveState() {
     varieties: state.varieties,
     containerKinds: state.containerKinds,
     sizes: state.sizes,
-    timer: state.timer
+    timer: state.timer,
+    streams: state.streams
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
@@ -2149,14 +2153,15 @@ function renderStreams() {
   var list = document.getElementById('streamsList');
   list.innerHTML = '';
 
-  if (state.streams.length === 0) {
-    state.streams.push({ id: Date.now(), before: '', after: '' });
+  // Завжди мінімум 2 streams
+  while (state.streams.length < 2) {
+    state.streams.push({ id: Date.now() + state.streams.length, before: '', after: '' });
   }
 
   state.streams.forEach(function(stream, idx) {
     var block = document.createElement('div');
     block.className = 'stream-block';
-    var showRemove = state.streams.length > 1;
+    var showRemove = state.streams.length > 2;
 
     var html = '';
     html += '<div class="stream-head">';
@@ -2199,7 +2204,7 @@ function renderStreams() {
     if (showRemove) {
       block.querySelector('[data-role="remove"]').addEventListener('click', function() {
         state.streams = state.streams.filter(function(s) { return s.id !== stream.id; });
-        if (state.streams.length === 0) state.streams.push({ id: Date.now(), before: '', after: '' });
+        if (state.streams.length < 2) state.streams.push({ id: Date.now(), before: '', after: '' });
         renderStreams();
         updateSpeedDisplay();
         updateStreamTotal();
@@ -2445,7 +2450,10 @@ function lapTimer() {
 
 function resetTimer() {
   state.timer = { running: false, startMs: null, elapsedMs: 0, frozenElapsedMs: 0, lastLapMs: 0 };
-  state.streams = [];
+  state.streams = [
+    { id: Date.now(), before: '', after: '' },
+    { id: Date.now() + 1, before: '', after: '' }
+  ];
   clearInterval(timerInterval);
   releaseWakeLock();
   saveState();
