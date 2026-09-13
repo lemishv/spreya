@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spreya — тести</title>
+<style>
+  body { font: 14px/1.5 ui-monospace, monospace; background: #111; color: #ddd; padding: 16px; max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 18px; margin-bottom: 12px; }
+  .ok { color: #7fd48a; }
+  .fail { color: #f08a8a; }
+  .suite { margin: 16px 0 6px; color: #d4a574; font-weight: 600; }
+  #summary { font-size: 16px; margin: 12px 0; padding: 10px; border: 1px solid #333; }
+  li { list-style: none; padding: 2px 0; }
+  iframe { width: 380px; height: 600px; border: 1px solid #333; margin-top: 16px; }
+  details { margin-top: 4px; color: #999; }
+</style>
+</head>
+<body>
+<h1>Spreya — автотести</h1>
+<div id="summary">…</div>
+<ul id="results"></ul>
+<script src="../calc.js"></script>
+<script>
+'use strict';
+// Мінімальний раннер: test(name, fn) → PASS/FAIL, підсумок у <title> для headless-запуску.
+var results = [];
+var currentSuite = '';
+function suite(name) { currentSuite = name; var li = document.createElement('li'); li.className = 'suite'; li.textContent = name; document.getElementById('results').appendChild(li); }
+function report(name, ok, err) {
+  results.push({ name: name, ok: ok });
+  var li = document.createElement('li');
+  li.className = ok ? 'ok' : 'fail';
+  li.textContent = (ok ? '✓ ' : '✗ ') + name + (ok ? '' : ' — ' + err);
+  document.getElementById('results').appendChild(li);
+}
+function test(name, fn) {
+  var p;
+  try { p = Promise.resolve(fn()); } catch (e) { p = Promise.reject(e); }
+  return p.then(function() { report(name, true); }, function(e) { report(name, false, e && e.message || String(e)); });
+}
+function eq(a, b, msg) { if (a !== b) throw new Error((msg || '') + ' expected ' + JSON.stringify(b) + ', got ' + JSON.stringify(a)); }
+function near(a, b, eps, msg) { if (Math.abs(a - b) > (eps || 0.01)) throw new Error((msg || '') + ' expected ≈' + b + ', got ' + a); }
+function ok(v, msg) { if (!v) throw new Error(msg || 'expected truthy'); }
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+var NB = Calc.NBSP;
+
+// ── Чисті розрахунки ───────────────────────────────────────────────────────
+function calcSuite() {
+  suite('calc.js');
+  var C = Calc;
+  return test('streamDelta: стало − було, порожнє й від\'ємне → 0', function() {
+    eq(C.streamDelta({ before: 200, after: 700 }), 500);
+    eq(C.streamDelta({ before: '', after: 1000 }), 1000);
+    eq(C.streamDelta({ before: 900, after: 700 }), 0);
+    eq(C.streamDelta({ before: 100, after: '' }), 0);
+  })
+  .then(function() { return test('streamsTotal', function() {
+    eq(C.streamsTotal([{ before: 0, after: 1000 }, { before: 200, after: 700 }, { before: '', after: '' }]), 1500);
+  }); })
+  .then(function() { return test('speedKgPerMin: 1 500 кг за 7,4 с', function() {
+    near(C.speedKgPerMin(1500, 7400), 12162.16, 0.01);
+    eq(C.speedKgPerMin(0, 7400), null);
+    eq(C.speedKgPerMin(1500, 0), null);
+  }); })
+  .then(function() { return test('mlPerMin = кг/хв × мл/т / 1000', function() {
+    near(C.mlPerMin(333.33, 250), 83.33, 0.01);
+    eq(C.mlPerMin(0, 250), null);
+    eq(C.mlPerMin(300, 0), null);
+  }); })
+  .then(function() { return test('minutesPerLiter і зворотний розрахунок', function() {
+    near(C.minutesPerLiter(83.33), 12.0, 0.01);
+    near(C.kgPerHourFromMlPerMin(83.33, 250), 19999.2, 0.1);
+    eq(C.minutesPerLiter(0), null);
+  }); })
+  .then(function() { return test('actualMlPerTon і deviationPct', function() {
+    near(C.actualMlPerTon(5, 5200), 961.54, 0.01);
+    near(C.deviationPct(961.54, 250), 284.6, 0.05);
+    eq(C.actualMlPerTon(5, 0), null);
+    eq(C.deviationPct(null, 250), null);
+  }); })
+  .then(function() { return test('сесія: лічильники, корекції, тоннаж', function() {
+    var s = {
+      containerTypes: [{ id: 'a', weight: 1000 }, { id: 'b', weight: 1100 }],
+      canVolumes: { 1: 5 },
+      events: [
+        { type: 'container', refId: 'a' }, { type: 'container', refId: 'a' }, { type: 'container', refId: 'a' },
+        { type: 'container', refId: 'b' }, { type: 'container', refId: 'b' },
+        { type: 'container_corr', refId: 'a', deltaKg: -500 },
+        { type: 'canister', refId: 1 }, { type: 'canister', refId: 1 },
+        { type: 'canister_corr', refId: 1, deltaL: -2.5 }
+      ]
+    };
+    eq(C.containerCount(s, 'a'), 3);
+    eq(C.containerCorrectionKg(s, 'a'), -500);
+    eq(C.typeTotalKg(s, s.containerTypes[0]), 2500);
+    eq(C.typeTotalKg(s, s.containerTypes[1]), 2200);
+    eq(C.sessionTotalKg(s), 4700);
+    eq(C.sessionContainers(s), 5);
+    eq(C.canisterCount(s, 1), 2);
+    eq(C.canisterCount(s, '1'), 2, 'id як рядок');
+    eq(C.canisterCorrectionL(s, 1), -2.5);
+    eq(C.prepLiters(s, 1, 10), 7.5, 'об\'єм із сесії має пріоритет');
+    eq(C.prepLiters({ containerTypes: [], canVolumes: {}, events: [{ type: 'canister', refId: 7 }] }, 7, 20), 20, 'fallback на препарат');
+  }); })
+  .then(function() { return test('sessionElapsedMs з паузами', function() {
+    eq(C.sessionElapsedMs({ startedAt: 1000, endedAt: 61000, totalPausedMs: 10000, paused: false }, 999999), 50000);
+    eq(C.sessionElapsedMs({ startedAt: 1000, endedAt: null, totalPausedMs: 0, paused: true, pauseStartedAt: 31000 }, 61000), 30000);
+    eq(C.sessionElapsedMs({ startedAt: null }, 5), 0);
+    eq(C.avgSpeedKgPerMin(4700, 60000), 4700);
+  }); })
+  .then(function() { return test('fmtNum: розряди, десяткова кома/крапка, мінус', function() {
+    eq(C.fmtNum(12162.16, 0, 'uk'), '12' + NB + '162');
+    eq(C.fmtNum(961.54, 1, 'uk'), '961,5');
+    eq(C.fmtNum(961.54, 1, 'en'), '961.5');
+    eq(C.fmtNum(-500, 0, 'uk'), '−500');
+    eq(C.fmtNum(NaN), '—');
+    eq(C.fmtLiters(7.5, 'uk'), '7,5');
+    eq(C.fmtLiters(10, 'uk'), '10');
+  }); })
+  .then(function() { return test('fmtHMS і fmtMinutes', function() {
+    var u = { sec: 'с', min: 'хв', hour: 'год' };
+    eq(C.fmtHMS(3723000), '01:02:03');
+    eq(C.fmtHMS(-5), '00:00:00');
+    eq(C.fmtMinutes(0.33, u), '20 с');
+    eq(C.fmtMinutes(12.4, u), '12 хв');
+    eq(C.fmtMinutes(59.6, u), '1 год');
+    eq(C.fmtMinutes(65.6, u), '1 год 6 хв');
+    eq(C.fmtMinutes(120, u), '2 год');
+    eq(C.fmtMinutes(0, u), '—');
+  }); });
+}
+
+// ── Сценарії застосунку (у iframe, окремий ключ localStorage) ─────────────
+var frame = null;
+function loadApp(seed) {
+  return new Promise(function(resolve) {
+    if (frame) frame.parentNode.removeChild(frame);
+    if (seed === undefined) localStorage.removeItem('spreya:test');
+    else localStorage.setItem('spreya:test', JSON.stringify(seed));
+    frame = document.createElement('iframe');
+    frame.src = '../index.html?storage=test&t=' + Date.now();
+    frame.addEventListener('load', function() { setTimeout(function() { resolve(frame.contentWindow); }, 80); });
+    document.body.appendChild(frame);
+  });
+}
+function q(w, sel) { return w.document.querySelector(sel); }
+function qa(w, sel) { return Array.prototype.slice.call(w.document.querySelectorAll(sel)); }
+function setVal(el, v) { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); }
+function click(w, sel) { var el = q(w, sel); if (!el) throw new Error('нема елемента ' + sel); el.click(); }
+
+// Створює й запускає сесію з одним типом ємкості 1000 кг.
+function startSessionWith(w, weight) {
+  click(w, '#sessionEntry');
+  return sleep(30).then(function() {
+    click(w, '#sessionView [data-action="add-ctype"]');
+    return sleep(30);
+  }).then(function() {
+    click(w, '#modalRoot [data-weight-preset="' + (weight || 1000) + '"]');
+    click(w, '#modalRoot [data-action="save"]');
+    return sleep(30);
+  }).then(function() {
+    click(w, '#sessionView [data-action="start"]');
+    return sleep(30);
+  });
+}
+
+function appSuite() {
+  suite('app.js — сценарії');
+  var w;
+  return loadApp().then(function(win) { w = win; })
+  .then(function() { return test('старт без ємкостей → тост, сесія лишається чернеткою', function() {
+    click(w, '#sessionEntry');
+    return sleep(30).then(function() {
+      click(w, '#sessionView [data-action="start"]');
+      return sleep(30);
+    }).then(function() {
+      ok(!w.state.session.startedAt, 'не мала стартувати');
+      ok(q(w, '#toast').textContent.length > 0, 'тост');
+      click(w, '#sessionView [data-action="discard"]');
+    });
+  }); })
+  .then(function() { return test('модалка ємкості: «+ новий тип» не закриває модалку і зберігає чернетку', function() {
+    click(w, '#sessionEntry');
+    return sleep(30).then(function() {
+      click(w, '#sessionView [data-action="add-ctype"]');
+      return sleep(30);
+    }).then(function() {
+      click(w, '#modalRoot [data-size="крупна"]');
+      return sleep(20);
+    }).then(function() {
+      click(w, '#modalRoot [data-weight-preset="1100"]');
+      click(w, '#modalRoot [data-action="addKind"]');
+      return sleep(50);
+    }).then(function() {
+      ok(q(w, '#promptRoot'), 'запит відкрився');
+      setVal(q(w, '#promptRoot [data-role="textInput"]'), 'бочка');
+      click(w, '#promptRoot [data-action="submit"]');
+      return sleep(50);
+    }).then(function() {
+      ok(q(w, '#modalRoot'), 'модалка має лишитись відкритою');
+      ok(!q(w, '#promptRoot'), 'запит закрився');
+      eq(q(w, '#modalRoot [data-kind].selected').textContent, 'бочка');
+      eq(q(w, '#modalRoot [data-size].selected').textContent, 'крупна');
+      eq(q(w, '#modalRoot [data-role="weight"]').value, '1100');
+      click(w, '#modalRoot [data-action="save"]');
+      return sleep(30);
+    }).then(function() {
+      eq(w.state.session.containerTypes.length, 1);
+      eq(w.state.session.containerTypes[0].kind, 'бочка');
+      click(w, '#sessionView [data-action="discard"]');
+    });
+  }); })
+  .then(function() { return test('порожня вага → повідомлення під полем, модалка відкрита', function() {
+    click(w, '#sessionEntry');
+    return sleep(30).then(function() {
+      click(w, '#sessionView [data-action="add-ctype"]');
+      return sleep(30);
+    }).then(function() {
+      click(w, '#modalRoot [data-action="save"]');
+      return sleep(30);
+    }).then(function() {
+      ok(q(w, '#modalRoot'), 'модалка відкрита');
+      ok(q(w, '#modalRoot .field-error'), 'є повідомлення');
+      w.closeModal();
+      click(w, '#sessionView [data-action="discard"]');
+    });
+  }); })
+  .then(function() { return test('цифри сходяться: картка, тоннаж, підсумок, історія (з корекцією)', function() {
+    return startSessionWith(w, 1000).then(function() {
+      var id = q(w, '[data-action="add-container"]').getAttribute('data-id');
+      for (var i = 0; i < 3; i++) click(w, '[data-action="add-container"][data-id="' + id + '"]');
+      click(w, '[data-action="add-canister"]');
+      w.applyContainerCorrection(id, -500);
+      w.refreshSessionNumbers();
+      eq(q(w, '#sessionTonnage').textContent, '2' + NB + '500');
+      ok(q(w, '.ctype-meta').textContent.indexOf('2' + NB + '500') !== -1, 'картка з корекцією: ' + q(w, '.ctype-meta').textContent);
+      ok(q(w, '.session-prep-actual').textContent.indexOf('2' + NB + '000,0') !== -1, 'факт 5 л / 2,5 т = 2000 мл/т: ' + q(w, '.session-prep-actual').textContent);
+      click(w, '[data-action="end"]'); click(w, '[data-action="end"]');
+      return sleep(30);
+    }).then(function() {
+      var rows = qa(w, '.summary-row').map(function(r) { return r.textContent; });
+      ok(rows.some(function(t) { return t.indexOf('3 × 1' + NB + '000 − 500 = 2' + NB + '500') !== -1; }), 'формула типу: ' + rows.join(' | '));
+      ok(rows.some(function(t) { return t.indexOf('2' + NB + '500') !== -1 && t.indexOf('тоннаж') !== -1; }), 'загальний тоннаж');
+      click(w, '[data-action="archive"]');
+      return sleep(30);
+    }).then(function() {
+      click(w, '#historyEntry');
+      return sleep(30);
+    }).then(function() {
+      ok(q(w, '.history-meta').textContent.indexOf('2' + NB + '500') !== -1, 'історія: ' + q(w, '.history-meta').textContent);
+      click(w, '#historyView [data-action="back"]');
+    });
+  }); })
+  .then(function() { return test('перегляд сесії з історії не знищує активну сесію', function() {
+    var activeId;
+    return startSessionWith(w, 1250).then(function() {
+      click(w, '[data-action="add-container"]'); click(w, '[data-action="add-container"]');
+      activeId = w.state.session.id;
+      click(w, '#sessionView [data-action="back"]');
+      click(w, '#historyEntry');
+      return sleep(30);
+    }).then(function() {
+      click(w, '#historyView [data-action="view"]');
+      return sleep(30);
+    }).then(function() {
+      ok(w.state.viewingSessionId, 'режим перегляду');
+      eq(w.state.session.id, activeId, 'активна сесія на місці');
+      eq(w.state.session.events.length, 2);
+      click(w, '[data-action="back-history"]');
+      click(w, '#historyView [data-action="back"]');
+      eq(w.state.session.id, activeId);
+      eq(w.Calc.sessionTotalKg(w.state.session), 2500);
+    });
+  }); })
+  .then(function() { return test('журнал лишається відкритим після видалення запису', function() {
+    click(w, '#sessionEntry');
+    return sleep(30).then(function() {
+      click(w, '[data-action="toggle-log"]');
+      var before = qa(w, '.log-item').length;
+      click(w, '.log-item [data-action="remove-event"]');
+      eq(qa(w, '.log-item').length, before - 1);
+      eq(q(w, '#logList').className, 'log-list', 'відкритий');
+    });
+  }); })
+  .then(function() { return test('−1 знімає останню подію; при 0 — вимкнено', function() {
+    var cnt = w.Calc.sessionContainers(w.state.session);
+    click(w, '[data-action="undo-container"]');
+    eq(w.Calc.sessionContainers(w.state.session), cnt - 1);
+    ok(q(w, '[data-action="undo-container"]').disabled, 'кнопка вимкнена при 0');
+  }); })
+  .then(function() { return test('видалення типу/препарату прибирає і їхні корекції', function() {
+    var tid = w.state.session.containerTypes[0].id;
+    var pid = w.state.session.activePrepIds[0];
+    w.applyContainerCorrection(tid, 300);
+    w.applyCanisterCorrection(pid, 1);
+    ok(w.state.session.events.some(function(e) { return e.type === 'container_corr'; }));
+    w.removeContainerType(tid);
+    w.removePrepFromSession(pid);
+    eq(w.state.session.events.length, 0, 'сиріт нема');
+    w.deleteCurrentSession();
+  }); })
+  .then(function() { return test('препарат у поточній сесії не можна видалити на головній', function() {
+    return startSessionWith(w, 1000).then(function() {
+      click(w, '#sessionView [data-action="back"]');
+      var n = w.state.preparations.length;
+      click(w, '#prepList [data-action="delete"]');
+      eq(w.state.preparations.length, n);
+      ok(q(w, '#toast').textContent.length > 0);
+      w.deleteCurrentSession();
+    });
+  }); })
+  .then(function() { return test('СТОП фіксує час як фінальне коло; Скинути — з підтвердженням', function() {
+    click(w, '#timerBtn');
+    return sleep(700).then(function() {
+      eq(q(w, '#timerBtn').textContent, 'КОЛО');
+      eq(q(w, '#timerBtn2').textContent, 'СТОП');
+      click(w, '#timerBtn2');
+      ok(!w.state.timer.running);
+      eq(w.state.timer.frozenElapsedMs, w.state.timer.elapsedMs);
+      setVal(qa(w, '#streamsList [data-role="after"]')[0], 1000);
+      ok(w.currentSpeed() > 0, 'швидкість розрахована');
+      click(w, '#timerBtn2');
+      ok(w.state.timer.elapsedMs > 0, 'перший тап не скидає');
+      click(w, '#timerBtn2');
+      eq(w.state.timer.elapsedMs, 0, 'другий тап скидає');
+    });
+  }); })
+  .then(function() { return test('ручна швидкість: явний режим і підказка', function() {
+    setVal(q(w, '#manualSpeed'), 120);
+    eq(w.state.speedMode, 'manual');
+    eq(q(w, '#speedNum').textContent, '120');
+    click(w, '#speedMode [data-mode="calc"]');
+    eq(q(w, '#speedNum').textContent, '0');
+    ok(q(w, '#speedHint').textContent.indexOf('120') !== -1, 'підказка про ручне значення');
+  }); })
+  .then(function() { return test('міграція: «Bag»/«Box» прибираються, якщо не використані', function() {
+    return loadApp({ preparations: [{ id: 1, name: 'X', norm: 100, canVolume: 5, active: true }], containerKinds: ['ящик', 'Bag', 'Box', 'мішок'], sessions: [] }).then(function(win) {
+      w = win;
+      eq(w.state.containerKinds.join(','), 'ящик,мішок');
+    });
+  }); })
+  .then(function() { return test('старі сесії без знімків препаратів читаються (Calc через sess)', function() {
+    return loadApp({
+      preparations: [{ id: 5, name: 'Old', norm: 200, canVolume: 5, active: true }],
+      sessions: [{ id: 's1', number: 1, variety: 'V', containerTypes: [{ id: 't', weight: 1000 }], activePrepIds: [5], canVolumes: { 5: 5 },
+        startedAt: 1000, endedAt: 61000, totalPausedMs: 0, events: [{ id: 'e1', ts: 2000, type: 'container', refId: 't' }, { id: 'e2', ts: 3000, type: 'canister', refId: 5 }] }]
+    }).then(function(win) {
+      w = win;
+      click(w, '#historyEntry');
+      return sleep(30);
+    }).then(function() {
+      ok(q(w, '.history-meta').textContent.indexOf('1' + NB + '000') !== -1);
+      click(w, '#historyView [data-action="view"]');
+      return sleep(30);
+    }).then(function() {
+      var txt = q(w, '#sessionView').textContent;
+      ok(txt.indexOf('Old') !== -1, 'назва препарату');
+      ok(txt.indexOf('5' + NB + '000,0') !== -1, 'факт 5 л / 1 т = 5000 мл/т: ' + txt);
+    });
+  }); });
+}
+
+calcSuite().then(appSuite).then(function() {
+  var pass = results.filter(function(r) { return r.ok; }).length;
+  var fail = results.length - pass;
+  var s = document.getElementById('summary');
+  s.textContent = (fail ? 'FAIL ' : 'PASS ') + pass + '/' + results.length + (fail ? ' (' + fail + ' failed)' : '');
+  s.className = fail ? 'fail' : 'ok';
+  document.title = s.textContent;
+  localStorage.removeItem('spreya:test');
+});
+</script>
+</body>
+</html>
