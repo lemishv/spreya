@@ -1,91 +1,88 @@
 'use strict';
 
+var APP_VERSION = '0.7.0';
+// ?storage=test — окремий ключ для автотестів, щоб не чіпати реальні дані
+var STORAGE_KEY = /[?&]storage=test\b/.test(location.search) ? 'spreya:test' : 'spreya:v1';
+var PRESETS = [1000, 1100, 1250];
+var MAX_STREAMS = 3;
+var CONFIRM_WINDOW_MS = 3000;
+var MAX_VARIETIES = 10;
+
+// ── Переклади ───────────────────────────────────────────────────────────────
+
 var T = {
   uk: {
     title: 'Спрея',
     potatoSpeed: 'Швидкість картоплі',
     start: 'СТАРТ',
-    stop: 'КОЛО',
     lap: 'КОЛО',
+    stopBtn: 'СТОП',
     reset: 'Скинути',
     streamsLabel: 'Ваги',
     addStream: '+ Додати ваги',
+    removeStream: 'Прибрати ваги',
     totalDelta: 'Набрано',
     before: 'Було',
     after: 'Стало',
-    orManually: 'Або вручну',
-    sprayerSpeed: 'Швидкість спреї',
     kg: 'кг',
     kgPerMin: 'кг/хв',
     kgPerHour: 'кг/год',
     mlPerTon: 'мл/т',
     mlPerMin: 'мл/хв',
+    modeCalc: 'Розрахунок',
+    modeManual: 'Вручну',
+    hintCalc: 'розрахунок',
+    hintManual: 'вручну',
+    hintNoData: 'Натисніть КОЛО або СТОП і введіть ваги',
+    hintSwitch: 'тапніть, щоб перемкнути',
     preparations: 'Препарати',
     addPrep: '+ Додати препарат',
     name: 'Назва',
     norm: 'Норма',
     saveBtn: 'Зберегти',
     cancelBtn: 'Скасувати',
-    deleteQ: 'Видалити?',
     namePlaceholder: 'напр. MAXIM',
     perLiterLabel: '1 л =',
+    secShort: 'с',
     minShort: 'хв',
     hourShort: 'год',
-    resume: 'ПРОДОВЖИТИ',
     canVolume: 'Каністра',
     liter: 'л',
-    sessionBtn: 'Сесія',
+    canShort: 'кан',
     newSession: 'Нова сесія',
-    activeSessionLabel: 'Триває сесія',
     sessionNumber: 'Сесія №',
+    draft: 'налаштування',
     variety: 'Сорт',
     varietyPlaceholder: 'напр. Бельмонда',
-    containerType: 'Ваги',
-    containerLabel: 'Підпис',
-    containerLabelPlaceholder: 'напр. Ящик',
+    containers: 'Ємкості',
+    addContainerType: '+ Додати ємкість',
     weight: 'Вага',
-    addContainerType: '+ Додати ваги',
     selectPrepsForSession: 'Препарати в цій сесії',
     startSessionBtn: 'СТАРТ СЕСІЇ',
-    cancelSessionBtn: '← Назад',
-    needContainer: 'Додайте хоча б один тип ємкості',
+    backBtn: '← Назад',
+    needContainer: 'Додайте хоча б одну ємкість',
     pcs: 'шт',
-    addContainerEvent: '+1',
-    addCanisterEvent: '+1 кан',
+    minusOne: '−1',
+    plusOne: '+1',
     totalTonnage: 'Загальний тоннаж',
     fact: 'факт',
     log: 'Журнал',
     endSessionBtn: 'Завершити сесію',
-    confirmEndSession: 'Завершити сесію?',
     sessionCompleted: 'Сесія завершена',
     duration: 'Тривалість',
-    containers: 'Ємкостей',
+    containersCount: 'Ємкостей',
     avgSpeed: 'Середня швидкість',
     closeBtn: 'Закрити',
-    backBtn: '← Назад',
     pauseBtn: 'Пауза',
     resumeBtn: 'Продовжити',
     paused: 'НА ПАУЗІ',
-    sessionsHistoryEmpty: 'Поки що нема завершених сесій',
-    sessionsHistoryLabel: 'Завершені сесії',
     confirmDouble: 'Ще раз — точно',
-    deleteType: 'Видалити тип',
+    deleteType: 'Видалити ємкість',
     removeFromSession: 'Прибрати з сесії',
     deleteSession: 'Видалити сесію',
-    typeHasEvents: 'У цьому типі вже є події. Спочатку видаліть їх через журнал, або тапніть «Видалити тип» ще раз — це видалить тип і всі пов\'язані події.',
-    prepHasEvents: 'У цього препарату вже є залиті каністри. Прибрати з сесії — лічильники будуть втрачені. Тапніть ще раз для підтвердження.',
     kind: 'Тип',
     size: 'Розмір',
-    sizeNone: 'без розміру',
     correction: 'Корекція',
-    correctionHint: 'додатне — додати, від\'ємне — забрати',
-    countLabel: 'Лічильник',
-    sessionsBtn: 'Завершені сесії',
-    sessionsList: 'Завершені сесії',
-    noSessions: 'Поки що нема завершених сесій',
-    viewSession: 'Переглянути',
-    addNew: '+ Додати',
-    edit: 'Редагувати',
     countUnits: 'Кількість штук',
     correctionKg: 'Корекція (кг)',
     correctionL: 'Корекція (л)',
@@ -93,93 +90,110 @@ var T = {
     addKindTitle: 'Новий тип',
     addKindHint: 'напр. бочка, контейнер',
     addSizeTitle: 'Новий розмір',
-    addSizeHint: 'напр. насіннєва, технічна'
+    addSizeHint: 'напр. насіннєва, технічна',
+    edit: 'Редагувати',
+    sessionsBtn: 'Завершені сесії',
+    sessionsList: 'Завершені сесії',
+    noSessions: 'Поки що нема завершених сесій',
+    viewSession: 'Переглянути',
+    share: 'Поділитися',
+    copied: 'Підсумок скопійовано',
+    dataLabel: 'Дані',
+    exportBtn: 'Експорт (JSON)',
+    importBtn: 'Імпорт (JSON)',
+    exportHint: 'Усі препарати, сесії та налаштування — в один файл. Зберігайте копію: дані живуть лише в цьому браузері.',
+    importTitle: 'Імпорт даних',
+    importConfirm: 'Замінити всі поточні дані вмістом файлу?',
+    importSummary: 'У файлі: {sessions} сесій, {preps} препаратів.',
+    importBad: 'Файл не схожий на експорт Спреї',
+    replaceBtn: 'Замінити',
+    weightRequired: 'Вкажіть вагу ємкості',
+    nameRequired: 'Вкажіть назву',
+    normRequired: 'Норма має бути більшою за 0',
+    canRequired: 'Об\'єм каністри має бути більшим за 0',
+    prepInUse: 'Препарат у поточній сесії — спочатку приберіть його там',
+    newVersion: 'Є нова версія',
+    reloadBtn: 'Оновити',
+    offlineReady: 'Готово до роботи офлайн',
+    ariaTheme: 'Перемкнути тему',
+    ariaEdit: 'Редагувати',
+    ariaDelete: 'Видалити',
+    ariaRemove: 'Прибрати',
+    ariaToggle: 'Увімкнути/вимкнути',
+    ariaRemoveEvent: 'Видалити запис'
   },
   en: {
     title: 'Spreya',
     potatoSpeed: 'Potato throughput',
     start: 'START',
-    stop: 'LAP',
     lap: 'LAP',
+    stopBtn: 'STOP',
     reset: 'Reset',
-    streamsLabel: 'Weights',
-    addStream: '+ Add weights',
+    streamsLabel: 'Scales',
+    addStream: '+ Add scale',
+    removeStream: 'Remove scale',
     totalDelta: 'Added',
     before: 'Before',
     after: 'After',
-    orManually: 'Or manually',
-    sprayerSpeed: 'Sprayer speed',
     kg: 'kg',
     kgPerMin: 'kg/min',
     kgPerHour: 'kg/h',
     mlPerTon: 'ml/t',
     mlPerMin: 'ml/min',
+    modeCalc: 'Calculated',
+    modeManual: 'Manual',
+    hintCalc: 'calculated',
+    hintManual: 'manual',
+    hintNoData: 'Press LAP or STOP and enter weights',
+    hintSwitch: 'tap to switch',
     preparations: 'Treatments',
     addPrep: '+ Add treatment',
     name: 'Name',
     norm: 'Rate',
     saveBtn: 'Save',
     cancelBtn: 'Cancel',
-    deleteQ: 'Delete?',
     namePlaceholder: 'e.g. MAXIM',
     perLiterLabel: '1 L =',
+    secShort: 's',
     minShort: 'min',
     hourShort: 'h',
-    resume: 'RESUME',
     canVolume: 'Canister',
     liter: 'L',
-    sessionBtn: 'Session',
+    canShort: 'can',
     newSession: 'New session',
-    activeSessionLabel: 'Session in progress',
     sessionNumber: 'Session #',
+    draft: 'setup',
     variety: 'Variety',
     varietyPlaceholder: 'e.g. Belmonda',
-    containerType: 'Weights',
-    containerLabel: 'Label',
-    containerLabelPlaceholder: 'e.g. Crate',
+    containers: 'Containers',
+    addContainerType: '+ Add container',
     weight: 'Weight',
-    addContainerType: '+ Add weights',
     selectPrepsForSession: 'Treatments in this session',
     startSessionBtn: 'START SESSION',
-    cancelSessionBtn: '← Back',
-    needContainer: 'Add at least one container type',
+    backBtn: '← Back',
+    needContainer: 'Add at least one container',
     pcs: 'pcs',
-    addContainerEvent: '+1',
-    addCanisterEvent: '+1 can',
+    minusOne: '−1',
+    plusOne: '+1',
     totalTonnage: 'Total tonnage',
     fact: 'actual',
     log: 'Log',
     endSessionBtn: 'End session',
-    confirmEndSession: 'End session?',
     sessionCompleted: 'Session completed',
     duration: 'Duration',
-    containers: 'Containers',
+    containersCount: 'Containers',
     avgSpeed: 'Average speed',
     closeBtn: 'Close',
-    backBtn: '← Back',
     pauseBtn: 'Pause',
     resumeBtn: 'Resume',
     paused: 'PAUSED',
-    sessionsHistoryEmpty: 'No completed sessions yet',
-    sessionsHistoryLabel: 'Completed sessions',
     confirmDouble: 'Tap again to confirm',
-    deleteType: 'Delete type',
+    deleteType: 'Delete container',
     removeFromSession: 'Remove from session',
     deleteSession: 'Delete session',
-    typeHasEvents: 'This type has events. Remove them via Log first, or tap «Delete type» again to delete type and all events.',
-    prepHasEvents: 'This treatment already has canisters. Removing — counters will be lost. Tap again to confirm.',
     kind: 'Kind',
     size: 'Size',
-    sizeNone: 'no size',
     correction: 'Correction',
-    correctionHint: 'positive — add, negative — subtract',
-    countLabel: 'Count',
-    sessionsBtn: 'Completed sessions',
-    sessionsList: 'Completed sessions',
-    noSessions: 'No completed sessions yet',
-    viewSession: 'View',
-    addNew: '+ Add',
-    edit: 'Edit',
     countUnits: 'Count',
     correctionKg: 'Correction (kg)',
     correctionL: 'Correction (L)',
@@ -187,98 +201,153 @@ var T = {
     addKindTitle: 'New kind',
     addKindHint: 'e.g. barrel, container',
     addSizeTitle: 'New size',
-    addSizeHint: 'e.g. seed, technical'
+    addSizeHint: 'e.g. seed, technical',
+    edit: 'Edit',
+    sessionsBtn: 'Completed sessions',
+    sessionsList: 'Completed sessions',
+    noSessions: 'No completed sessions yet',
+    viewSession: 'View',
+    share: 'Share',
+    copied: 'Summary copied',
+    dataLabel: 'Data',
+    exportBtn: 'Export (JSON)',
+    importBtn: 'Import (JSON)',
+    exportHint: 'All treatments, sessions and settings in one file. Keep a copy: data lives only in this browser.',
+    importTitle: 'Import data',
+    importConfirm: 'Replace all current data with the file contents?',
+    importSummary: 'File contains {sessions} sessions, {preps} treatments.',
+    importBad: 'File does not look like a Spreya export',
+    replaceBtn: 'Replace',
+    weightRequired: 'Enter the container weight',
+    nameRequired: 'Enter a name',
+    normRequired: 'Rate must be greater than 0',
+    canRequired: 'Canister volume must be greater than 0',
+    prepInUse: 'Treatment is in the current session — remove it there first',
+    newVersion: 'New version available',
+    reloadBtn: 'Reload',
+    offlineReady: 'Ready to work offline',
+    ariaTheme: 'Toggle theme',
+    ariaEdit: 'Edit',
+    ariaDelete: 'Delete',
+    ariaRemove: 'Remove',
+    ariaToggle: 'Toggle',
+    ariaRemoveEvent: 'Remove entry'
   }
 };
 
-var STORAGE_KEY = 'spreya:v1';
-var PRESETS = [1000, 1100, 1250];
+function tr(key) { return T[state.lang][key] || T.uk[key] || key; }
+
+function trf(key, vars) {
+  return tr(key).replace(/\{(\w+)\}/g, function(_, k) { return vars[k] != null ? vars[k] : ''; });
+}
+
+// ── Стан ────────────────────────────────────────────────────────────────────
 
 var state = {
   lang: 'uk',
   theme: 'dark',
   manualSpeed: 0,
+  speedMode: 'calc',            // 'calc' | 'manual'
   preparations: [
     { id: 1, name: 'MAXIM', norm: 250, canVolume: 5, active: true }
   ],
-  timer: { running: false, startMs: null, elapsedMs: 0, frozenElapsedMs: 0, lastLapMs: 0 },
+  timer: { running: false, startMs: null, elapsedMs: 0, frozenElapsedMs: 0 },
   streams: [],
   editingPrepId: null,
-  view: 'main',
-  session: null,
-  sessions: [],
+  view: 'main',                 // 'main' | 'session' | 'history'
+  session: null,                // поточна (чернетка / активна / щойно завершена)
+  sessions: [],                 // архів
   varieties: [],
   containerKinds: ['ящик', 'мішок'],
   sizes: ['крупна', 'середня', 'дрібна'],
-  modal: null
+  viewingSessionId: null,       // перегляд з історії — не чіпає state.session
+  modal: null,
+  prompt: null,
+  ui: { logOpen: false, addPrepOpen: false }
 };
 
 var timerInterval = null;
+var sessionTicker = null;
+var LEGACY_KINDS = ['Bag', 'Box']; // колись додавались автоматично англійською
 
 function loadState() {
-  try {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    var data = JSON.parse(raw);
-    if (data.lang) state.lang = data.lang;
-    if (data.theme === 'light' || data.theme === 'dark') state.theme = data.theme;
-    if (typeof data.manualSpeed === 'number') state.manualSpeed = data.manualSpeed;
-    if (Array.isArray(data.preparations)) {
-      state.preparations = data.preparations.map(function(p) {
-        if (p.canVolume == null) p.canVolume = 5;
-        return p;
-      });
-    }
-    if (data.session) {
-      state.session = data.session;
-      // Migrate container types: add kind/size if missing
-      if (state.session.containerTypes) {
-        state.session.containerTypes.forEach(function(t) {
-          if (!t.kind) t.kind = 'ящик';
-          if (t.size === undefined) t.size = '';
-        });
-      }
-    }
-    if (Array.isArray(data.sessions)) {
-      state.sessions = data.sessions.map(function(s) {
-        if (s.containerTypes) {
-          s.containerTypes.forEach(function(t) {
-            if (!t.kind) t.kind = 'ящик';
-            if (t.size === undefined) t.size = '';
-          });
-        }
-        return s;
-      });
-    }
-    if (Array.isArray(data.varieties)) state.varieties = data.varieties;
-    if (Array.isArray(data.containerKinds) && data.containerKinds.length > 0) state.containerKinds = data.containerKinds;
-    // Permanent kinds are always available
-    PERMANENT_KINDS.forEach(function(k) {
-      if (state.containerKinds.indexOf(k) === -1) state.containerKinds.push(k);
+  var raw;
+  try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { return; }
+  if (!raw) return;
+  var data;
+  try { data = JSON.parse(raw); } catch (e) { console.warn('load failed', e); return; }
+  if (!data || typeof data !== 'object') return;
+
+  if (data.lang === 'uk' || data.lang === 'en') state.lang = data.lang;
+  if (data.theme === 'light' || data.theme === 'dark') state.theme = data.theme;
+  if (typeof data.manualSpeed === 'number' && isFinite(data.manualSpeed)) state.manualSpeed = data.manualSpeed;
+  if (data.speedMode === 'manual' || data.speedMode === 'calc') state.speedMode = data.speedMode;
+  else state.speedMode = state.manualSpeed > 0 ? 'manual' : 'calc';
+
+  if (Array.isArray(data.preparations)) {
+    state.preparations = data.preparations.filter(function(p) { return p && typeof p === 'object'; }).map(function(p) {
+      if (p.canVolume == null) p.canVolume = 5;
+      if (typeof p.name !== 'string') p.name = '';
+      return p;
     });
-    if (Array.isArray(data.sizes) && data.sizes.length > 0) state.sizes = data.sizes;
-    if (data.timer && typeof data.timer === 'object') {
-      state.timer.running = !!data.timer.running;
-      state.timer.startMs = (typeof data.timer.startMs === 'number') ? data.timer.startMs : null;
-      state.timer.elapsedMs = (typeof data.timer.elapsedMs === 'number') ? data.timer.elapsedMs : 0;
-      state.timer.frozenElapsedMs = (typeof data.timer.frozenElapsedMs === 'number') ? data.timer.frozenElapsedMs : 0;
-      state.timer.lastLapMs = (typeof data.timer.lastLapMs === 'number') ? data.timer.lastLapMs : 0;
-      // If timer was running when app was closed/killed, recompute elapsed from wall-clock.
-      if (state.timer.running && state.timer.startMs) {
-        state.timer.elapsedMs = Date.now() - state.timer.startMs;
-      }
+  }
+  if (data.session && typeof data.session === 'object') state.session = migrateSession(data.session);
+  if (Array.isArray(data.sessions)) state.sessions = data.sessions.filter(function(s) { return s && typeof s === 'object'; }).map(migrateSession);
+  if (Array.isArray(data.varieties)) state.varieties = data.varieties.filter(function(v) { return typeof v === 'string'; });
+  if (Array.isArray(data.containerKinds) && data.containerKinds.length > 0) state.containerKinds = data.containerKinds.filter(function(v) { return typeof v === 'string'; });
+  if (Array.isArray(data.sizes) && data.sizes.length > 0) state.sizes = data.sizes.filter(function(v) { return typeof v === 'string'; });
+
+  // Прибираємо «Bag»/«Box», якщо їх не використовує жодна ємкість.
+  var usedKinds = {};
+  allSessions().forEach(function(s) {
+    (s.containerTypes || []).forEach(function(t) { usedKinds[t.kind] = true; });
+  });
+  state.containerKinds = state.containerKinds.filter(function(k) {
+    return LEGACY_KINDS.indexOf(k) === -1 || usedKinds[k];
+  });
+  if (state.containerKinds.length === 0) state.containerKinds = ['ящик'];
+
+  if (data.timer && typeof data.timer === 'object') {
+    state.timer.running = !!data.timer.running;
+    state.timer.startMs = (typeof data.timer.startMs === 'number') ? data.timer.startMs : null;
+    state.timer.elapsedMs = (typeof data.timer.elapsedMs === 'number') ? data.timer.elapsedMs : 0;
+    state.timer.frozenElapsedMs = (typeof data.timer.frozenElapsedMs === 'number') ? data.timer.frozenElapsedMs : 0;
+    // Секундомір біг, коли застосунок закрили — рахуємо від годинника.
+    if (state.timer.running && state.timer.startMs) {
+      state.timer.elapsedMs = Date.now() - state.timer.startMs;
+    } else if (state.timer.running) {
+      state.timer.running = false;
     }
-    if (Array.isArray(data.streams) && data.streams.length > 0) {
-      state.streams = data.streams;
-    }
-  } catch (e) { console.warn('load failed', e); }
+  }
+  if (Array.isArray(data.streams) && data.streams.length > 0) state.streams = data.streams;
 }
 
-function saveState() {
-  var data = {
+function migrateSession(s) {
+  if (!Array.isArray(s.events)) s.events = [];
+  if (!Array.isArray(s.containerTypes)) s.containerTypes = [];
+  if (!Array.isArray(s.activePrepIds)) s.activePrepIds = [];
+  if (!s.canVolumes || typeof s.canVolumes !== 'object') s.canVolumes = {};
+  if (!s.prepSnapshots || typeof s.prepSnapshots !== 'object') s.prepSnapshots = {};
+  if (typeof s.totalPausedMs !== 'number') s.totalPausedMs = 0;
+  s.containerTypes.forEach(function(t) {
+    if (!t.kind) t.kind = 'ящик';
+    if (t.size === undefined || t.size === null) t.size = '';
+  });
+  return s;
+}
+
+function allSessions() {
+  var list = state.sessions.slice();
+  if (state.session) list.push(state.session);
+  return list;
+}
+
+function serializeState() {
+  return {
     lang: state.lang,
     theme: state.theme,
     manualSpeed: state.manualSpeed,
+    speedMode: state.speedMode,
     preparations: state.preparations,
     session: state.session,
     sessions: state.sessions,
@@ -288,488 +357,28 @@ function saveState() {
     timer: state.timer,
     streams: state.streams
   };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-function applyTheme() {
-  document.documentElement.setAttribute('data-theme', state.theme);
-  var meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', state.theme === 'light' ? '#faf8f4' : '#0a0a0a');
-  var btn = document.getElementById('themeBtn');
-  if (btn) btn.textContent = state.theme === 'dark' ? '☀' : '☾';
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState()));
+  } catch (e) { console.warn('save failed', e); }
 }
 
-function tr(key) { return T[state.lang][key] || key; }
+// ── Утиліти ─────────────────────────────────────────────────────────────────
 
-function vibrate(p) { if (navigator.vibrate) navigator.vibrate(p); }
+function $(id) { return document.getElementById(id); }
 
-function fmtNum(n, decimals) {
-  if (decimals == null) decimals = 0;
-  if (!isFinite(n)) return '—';
-  var fixed = n.toFixed(decimals);
-  var parts = fixed.split('.');
-  var intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  return parts.length > 1 ? intPart + ',' + parts[1] : intPart;
+function vibrate(p) { if (navigator.vibrate) { try { navigator.vibrate(p); } catch (e) {} } }
+
+function fmtNum(n, decimals) { return Calc.fmtNum(n, decimals, state.lang); }
+function fmtLiters(l) { return Calc.fmtLiters(l, state.lang); }
+function fmtTime(ms) { return Calc.fmtHMS(ms); }
+function fmtMinutes(min) {
+  return Calc.fmtMinutes(min, { sec: tr('secShort'), min: tr('minShort'), hour: tr('hourShort') });
 }
-
-function fmtMinutesAsHM(minutes) {
-  if (!isFinite(minutes) || minutes <= 0) return '—';
-  if (minutes < 60) return Math.round(minutes) + ' ' + tr('minShort');
-  var h = Math.floor(minutes / 60);
-  var m = Math.round(minutes - h * 60);
-  if (m === 0) return h + ' ' + tr('hourShort');
-  return h + ' ' + tr('hourShort') + ' ' + m + ' ' + tr('minShort');
-}
-
-function fmtTime(ms) {
-  var totalSec = Math.floor(ms / 1000);
-  var h = Math.floor(totalSec / 3600);
-  var m = Math.floor((totalSec % 3600) / 60);
-  var s = totalSec % 60;
-  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, function(c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-  });
-}
-
-function streamDelta(stream) {
-  if (stream.after === '' || stream.after == null) return 0;
-  var after = Number(stream.after);
-  var before = Number(stream.before) || 0;
-  if (!isFinite(after)) return 0;
-  var delta = after - before;
-  return delta > 0 ? delta : 0;
-}
-
-function streamsTotal() {
-  var sum = 0;
-  for (var i = 0; i < state.streams.length; i++) sum += streamDelta(state.streams[i]);
-  return sum;
-}
-
-function calculatedSpeed() {
-  var total = streamsTotal();
-  var minutes = state.timer.frozenElapsedMs / 60000;
-  if (total <= 0 || minutes <= 0) return null;
-  return total / minutes;
-}
-
-function currentSpeed() {
-  var calc = calculatedSpeed();
-  if (calc !== null) return calc;
-  return state.manualSpeed || 0;
-}
-
-function renderI18n() {
-  document.documentElement.lang = state.lang;
-  document.title = tr('title');
-  var els = document.querySelectorAll('[data-i18n]');
-  for (var i = 0; i < els.length; i++) {
-    var key = els[i].getAttribute('data-i18n');
-    if (T[state.lang][key]) els[i].textContent = T[state.lang][key];
-  }
-  var langBtns = document.querySelectorAll('#langToggle button');
-  for (var j = 0; j < langBtns.length; j++) {
-    langBtns[j].classList.toggle('active', langBtns[j].getAttribute('data-lang') === state.lang);
-  }
-}
-
-function renderTimer() {
-  var display = document.getElementById('timerDisplay');
-  var lapEl = document.getElementById('lapDisplay');
-  var lapTimeEl = document.getElementById('lapTime');
-  var btn = document.getElementById('timerBtn');
-  var reset = document.getElementById('resetBtn');
-
-  display.textContent = fmtTime(state.timer.elapsedMs);
-
-  // Малий дисплей — показуємо тільки коли є зафіксований лап
-  if (state.timer.frozenElapsedMs > 0 && lapEl && lapTimeEl) {
-    lapEl.classList.remove('hidden');
-    lapTimeEl.textContent = fmtTime(state.timer.frozenElapsedMs);
-  } else if (lapEl) {
-    lapEl.classList.add('hidden');
-  }
-
-  if (state.timer.running) {
-    display.className = 'timer-display running';
-    btn.textContent = tr('lap');
-    btn.className = 'btn btn-stop';
-    reset.classList.remove('hidden');
-  } else {
-    display.className = state.timer.elapsedMs > 0 ? 'timer-display' : 'timer-display idle';
-    btn.textContent = tr('start');
-    btn.className = 'btn btn-primary';
-    reset.classList.toggle('hidden', state.timer.elapsedMs === 0 && state.timer.frozenElapsedMs === 0);
-  }
-}
-
-function refreshAllStreamDeltas() {
-  var total = streamsTotal();
-  var blocks = document.querySelectorAll('#streamsList .stream-block');
-  var multi = state.streams.length > 1;
-  state.streams.forEach(function(stream, idx) {
-    if (!blocks[idx]) return;
-    var deltaEl = blocks[idx].querySelector('[data-role="delta"]');
-    if (!deltaEl) return;
-    var d = streamDelta(stream);
-    if (d > 0) {
-      var content = 'Δ <strong>' + fmtNum(d) + '</strong> ' + tr('kg');
-      if (multi && total > 0) {
-        content += ' · ' + fmtNum(d / total * 100, 0) + '%';
-      }
-      deltaEl.innerHTML = content;
-    } else {
-      deltaEl.innerHTML = '';
-    }
-  });
-}
-
-function renderStreams() {
-  var list = document.getElementById('streamsList');
-  list.innerHTML = '';
-
-  // Завжди мінімум 2 streams
-  while (state.streams.length < 2) {
-    state.streams.push({ id: Date.now() + state.streams.length, before: '', after: '' });
-  }
-
-  state.streams.forEach(function(stream, idx) {
-    var block = document.createElement('div');
-    block.className = 'stream-block';
-    var showRemove = state.streams.length > 2;
-
-    var html = '';
-    html += '<div class="stream-head">';
-    html += '<div class="stream-num">№' + (idx + 1) + '</div>';
-    html += '<div class="stream-delta-inline" data-role="delta"></div>';
-    if (showRemove) html += '<button class="remove-stream" data-role="remove">✕</button>';
-    html += '</div>';
-    html += '<div class="stream-pair">';
-    html += '<div class="stream-field">';
-    html += '<div class="stream-field-label">' + tr('before') + '</div>';
-    html += '<input type="number" inputmode="decimal" data-role="before" value="' + escapeHtml(String(stream.before)) + '" placeholder="0">';
-    html += '</div>';
-    html += '<div class="arrow">→</div>';
-    html += '<div class="stream-field">';
-    html += '<div class="stream-field-label">' + tr('after') + '</div>';
-    html += '<input type="number" inputmode="decimal" data-role="after" value="' + escapeHtml(String(stream.after)) + '" placeholder="0">';
-    html += '</div>';
-    html += '</div>';
-    html += '<div class="stream-presets" data-role="presets"></div>';
-    block.innerHTML = html;
-
-    var beforeInput = block.querySelector('[data-role="before"]');
-    var afterInput = block.querySelector('[data-role="after"]');
-    var presetsEl = block.querySelector('[data-role="presets"]');
-    var deltaEl = block.querySelector('[data-role="delta"]');
-
-    beforeInput.addEventListener('input', function(e) {
-      stream.before = e.target.value === '' ? '' : Number(e.target.value);
-      refreshAllStreamDeltas();
-      updateSpeedDisplay();
-      updateStreamTotal();
-    });
-    afterInput.addEventListener('input', function(e) {
-      stream.after = e.target.value === '' ? '' : Number(e.target.value);
-      refreshAllStreamDeltas();
-      updateSpeedDisplay();
-      updateStreamTotal();
-    });
-
-    if (showRemove) {
-      block.querySelector('[data-role="remove"]').addEventListener('click', function() {
-        state.streams = state.streams.filter(function(s) { return s.id !== stream.id; });
-        if (state.streams.length < 2) state.streams.push({ id: Date.now(), before: '', after: '' });
-        renderStreams();
-        updateSpeedDisplay();
-        updateStreamTotal();
-      });
-    }
-
-    PRESETS.forEach(function(p) {
-      var b = document.createElement('button');
-      b.className = 'preset-btn';
-      b.textContent = p;
-      b.addEventListener('click', function() {
-        stream.after = p;
-        afterInput.value = p;
-        refreshAllStreamDeltas();
-        updateSpeedDisplay();
-        updateStreamTotal();
-      });
-      presetsEl.appendChild(b);
-    });
-
-    list.appendChild(block);
-  });
-
-  refreshAllStreamDeltas();
-  document.getElementById('addStreamBtn').disabled = state.streams.length >= 3;
-  updateStreamTotal();
-}
-
-function updateStreamTotal() {
-  document.getElementById('streamTotal').textContent = fmtNum(streamsTotal());
-}
-
-function updateSpeedDisplay() {
-  var speed = currentSpeed();
-  var numEl = document.getElementById('speedNum');
-  var hourEl = document.getElementById('speedHour');
-  if (speed > 0) {
-    numEl.className = 'num';
-    numEl.textContent = fmtNum(speed, speed < 100 ? 1 : 0);
-    hourEl.textContent = fmtNum(speed * 60);
-  } else {
-    numEl.className = 'num zero';
-    numEl.textContent = '0';
-    hourEl.textContent = '0';
-  }
-  renderPreparations();
-}
-
-function renderManualInput() {
-  var hidden = document.getElementById('manualSpeed');
-  var vis = document.getElementById('manualSpeedVis');
-  if (state.manualSpeed > 0) {
-    if (hidden) hidden.value = state.manualSpeed;
-    if (vis && document.activeElement !== vis) vis.value = state.manualSpeed;
-  } else {
-    if (vis && document.activeElement !== vis) vis.value = '';
-  }
-}
-
-function renderPreparations() {
-  var list = document.getElementById('prepList');
-  // Якщо кнопка видалення вже "зведена" — не перестворювати картки,
-  // щоб не скидати стан підтвердження.
-  if (list.querySelector('.prep-action-btn.armed')) {
-    // Тільки оновлюємо числа в існуючих картках
-    var speed = currentSpeed();
-    list.querySelectorAll('.prep-card').forEach(function(card, idx) {
-      var prep = state.preparations[idx];
-      if (!prep) return;
-      var mlMin = (speed > 0 && prep.active) ? speed * prep.norm / 1000 : null;
-      var mlEl = card.querySelector('.ml-min');
-      if (mlEl) mlEl.textContent = mlMin !== null ? fmtNum(mlMin, mlMin < 100 ? 1 : 0) : '—';
-    });
-    return;
-  }
-  list.innerHTML = '';
-  var speed = currentSpeed();
-
-  state.preparations.forEach(function(prep) {
-    var card = document.createElement('div');
-    card.className = 'prep-card' + (prep.active ? ' active' : '');
-
-    if (state.editingPrepId === prep.id) {
-      var editHtml = '';
-      editHtml += '<div class="prep-edit">';
-      editHtml += '<div class="field-row">';
-      editHtml += '<label>' + tr('name') + '</label>';
-      editHtml += '<input type="text" data-role="editName" value="' + escapeHtml(prep.name) + '" placeholder="' + escapeHtml(tr('namePlaceholder')) + '">';
-      editHtml += '</div>';
-      editHtml += '<div class="field-row">';
-      editHtml += '<label>' + tr('norm') + '</label>';
-      editHtml += '<input type="number" inputmode="decimal" data-role="editNorm" value="' + prep.norm + '">';
-      editHtml += '<span class="unit-tag">' + tr('mlPerTon') + '</span>';
-      editHtml += '</div>';
-      editHtml += '<div class="field-row">';
-      editHtml += '<label>' + tr('canVolume') + '</label>';
-      editHtml += '<input type="number" inputmode="decimal" data-role="editCan" value="' + (prep.canVolume || 5) + '">';
-      editHtml += '<span class="unit-tag">' + tr('liter') + '</span>';
-      editHtml += '</div>';
-      editHtml += '<div class="edit-actions">';
-      editHtml += '<button class="btn btn-secondary" data-action="cancel">' + tr('cancelBtn') + '</button>';
-      editHtml += '<button class="btn btn-primary" data-action="save">' + tr('saveBtn') + '</button>';
-      editHtml += '</div>';
-      editHtml += '</div>';
-      card.innerHTML = editHtml;
-
-      card.querySelector('[data-action="cancel"]').addEventListener('click', function() {
-        if (!prep.name) {
-          state.preparations = state.preparations.filter(function(p) { return p.id !== prep.id; });
-        }
-        state.editingPrepId = null;
-        renderPreparations();
-      });
-      card.querySelector('[data-action="save"]').addEventListener('click', function() {
-        var nameEl = card.querySelector('[data-role="editName"]');
-        var normEl = card.querySelector('[data-role="editNorm"]');
-        var canEl = card.querySelector('[data-role="editCan"]');
-        var newName = nameEl.value.trim();
-        var newNorm = Number(normEl.value);
-        var newCan = Number(canEl.value);
-        if (!newName) { nameEl.focus(); return; }
-        if (!isFinite(newNorm) || newNorm <= 0) { normEl.focus(); return; }
-        if (!isFinite(newCan) || newCan <= 0) { canEl.focus(); return; }
-        prep.name = newName;
-        prep.norm = newNorm;
-        prep.canVolume = newCan;
-        state.editingPrepId = null;
-        saveState();
-        renderPreparations();
-      });
-    } else {
-      var mlMin = (speed > 0 && prep.active) ? speed * prep.norm / 1000 : null;
-      var dimmed = mlMin === null ? 'dimmed' : '';
-      var mlText = mlMin !== null ? fmtNum(mlMin, mlMin < 100 ? 1 : 0) : '—';
-
-      var dispHtml = '';
-      dispHtml += '<div class="prep-head">';
-      dispHtml += '<div class="prep-checkbox ' + (prep.active ? 'checked' : '') + '" data-action="toggle"></div>';
-      dispHtml += '<div class="prep-name">' + escapeHtml(prep.name) + '<span style="font-family:var(--mono);font-size:12px;font-weight:400;color:var(--text-dim);margin-left:8px;letter-spacing:0;">' + fmtNum(prep.norm, 0) + ' ' + tr('mlPerTon') + '</span></div>';
-      dispHtml += '<div class="prep-actions">';
-      dispHtml += '<button class="prep-action-btn" data-action="edit">✎</button>';
-      dispHtml += '<button class="prep-action-btn del" data-action="delete">✕</button>';
-      dispHtml += '</div>';
-      dispHtml += '</div>';
-      var minPerLiter = (mlMin && mlMin > 0) ? 1000 / mlMin : null;
-      var rtText = minPerLiter !== null ? fmtMinutesAsHM(minPerLiter) : '—';
-      var rtDimmed = minPerLiter === null ? 'dimmed' : '';
-      dispHtml += '<div class="prep-output">';
-      dispHtml += '<div class="po-main">';
-      dispHtml += '<span class="arrow">→</span>';
-      dispHtml += '<span class="ml-min ' + dimmed + '">' + mlText + '</span>';
-      dispHtml += '<span class="ml-unit">' + tr('mlPerMin') + '</span>';
-      dispHtml += '</div>';
-      dispHtml += '<div class="po-runtime ' + rtDimmed + '">';
-      dispHtml += '<span class="rt-label">' + tr('perLiterLabel') + '</span>';
-      dispHtml += '<span>' + rtText + '</span>';
-      dispHtml += '</div>';
-      dispHtml += '</div>';
-      dispHtml += '<div class="prep-reverse">';
-      dispHtml += '<input type="number" inputmode="decimal" placeholder="0" data-role="revMl" data-prep-id="' + prep.id + '">';
-      dispHtml += '<span class="rev-unit">' + tr('mlPerMin') + '</span>';
-      dispHtml += '<span class="rev-arrow">→</span>';
-      dispHtml += '<span class="rev-result" data-role="revResult">—</span>';
-      dispHtml += '<span class="rev-result-unit">' + tr('kgPerHour') + '</span>';
-      dispHtml += '</div>';
-      card.innerHTML = dispHtml;
-
-      card.querySelector('[data-role="revMl"]').addEventListener('input', function(e) {
-        var ml = Number(e.target.value) || 0;
-        var resultEl = card.querySelector('[data-role="revResult"]');
-        if (ml > 0 && prep.norm > 0) {
-          var kgPerMin = ml * 1000 / prep.norm;
-          var kgPerHour = kgPerMin * 60;
-          resultEl.textContent = fmtNum(kgPerHour, 0);
-        } else {
-          resultEl.textContent = '—';
-        }
-      });
-
-      card.querySelector('[data-action="toggle"]').addEventListener('click', function() {
-        prep.active = !prep.active;
-        saveState();
-        renderPreparations();
-      });
-      card.querySelector('[data-action="edit"]').addEventListener('click', function() {
-        state.editingPrepId = prep.id;
-        renderPreparations();
-      });
-      armConfirmButton(card.querySelector('[data-action="delete"]'), function() {
-        state.preparations = state.preparations.filter(function(p) { return p.id !== prep.id; });
-        saveState();
-        renderPreparations();
-      });
-    }
-
-    list.appendChild(card);
-  });
-}
-
-// Wake Lock: keep screen on while stopwatch is running.
-var wakeLock = null;
-function acquireWakeLock() {
-  if (!('wakeLock' in navigator)) return;
-  if (document.visibilityState !== 'visible') return;
-  navigator.wakeLock.request('screen').then(function(lock) {
-    wakeLock = lock;
-    lock.addEventListener('release', function() { wakeLock = null; });
-  }).catch(function(e) { /* ignore — not critical */ });
-}
-function releaseWakeLock() {
-  if (wakeLock) {
-    try { wakeLock.release(); } catch (e) {}
-    wakeLock = null;
-  }
-}
-
-function startTimer() {
-  state.timer.elapsedMs = 0;
-  state.timer.lastLapMs = 0;
-  state.timer.frozenElapsedMs = 0;
-  state.timer.running = true;
-  state.timer.startMs = Date.now();
-  state.streams.forEach(function(s) { s.after = ''; });
-  vibrate(50);
-  clearInterval(timerInterval);
-  timerInterval = setInterval(tickTimer, 100);
-  acquireWakeLock();
-  saveState();
-  renderTimer();
-  renderStreams();
-  updateSpeedDisplay();
-}
-
-function lapTimer() {
-  if (state.timer.elapsedMs < 500) return; // захист від випадкового тапу
-  // Split time = повний час від старту до цього моменту.
-  state.timer.frozenElapsedMs = state.timer.elapsedMs;
-  vibrate([40, 40, 80]);
-  saveState();
-  renderTimer();
-  updateSpeedDisplay();
-}
-
-function resetTimer() {
-  state.timer = { running: false, startMs: null, elapsedMs: 0, frozenElapsedMs: 0, lastLapMs: 0 };
-  state.streams = [
-    { id: Date.now(), before: '', after: '' },
-    { id: Date.now() + 1, before: '', after: '' }
-  ];
-  clearInterval(timerInterval);
-  releaseWakeLock();
-  saveState();
-  renderTimer();
-  renderStreams();
-  updateSpeedDisplay();
-}
-
-// Throttle saving the running timer to localStorage (once per ~3 s).
-var lastTimerSaveMs = 0;
-function tickTimer() {
-  state.timer.elapsedMs = Date.now() - state.timer.startMs;
-  document.getElementById('timerDisplay').textContent = fmtTime(state.timer.elapsedMs);
-  var now = Date.now();
-  if (now - lastTimerSaveMs > 3000) {
-    lastTimerSaveMs = now;
-    saveState();
-  }
-}
-
-// ── SESSION ─────────────────────────────────────────────────────────────────
-
-var sessionTicker = null;
-var SESSION_PRESETS = [1000, 1100, 1250];
-var PERMANENT_KINDS = ['Bag', 'Box'];
-
-function uid() {
-  return Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
-}
-
-function fmtElapsedHMS(ms) {
-  if (!isFinite(ms) || ms < 0) ms = 0;
-  var totalSec = Math.floor(ms / 1000);
-  var h = Math.floor(totalSec / 3600);
-  var m = Math.floor((totalSec - h * 3600) / 60);
-  var s = totalSec - h * 3600 - m * 60;
-  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+function fmtSigned(n, decimals) {
+  return (n > 0 ? '+' : '') + fmtNum(n, decimals);
 }
 
 function fmtClock(ts) {
@@ -782,10 +391,648 @@ function fmtDate(ts) {
   return String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
 }
 
+function fmtDateISO(ts) {
+  var d = new Date(ts);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, function(c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function uid() {
+  return Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+function sameId(a, b) { return String(a) === String(b); }
+
+// Двоетапне підтвердження: перший тап «зводить» кнопку, другий протягом
+// CONFIRM_WINDOW_MS виконує дію. Повертає true, коли дію можна виконувати.
+function confirmTap(btn) {
+  if (btn._armed) {
+    disarmConfirm(btn);
+    return true;
+  }
+  btn._armed = true;
+  btn._origText = btn.textContent;
+  btn.classList.add('armed');
+  btn.textContent = '↻ ' + tr('confirmDouble');
+  vibrate(40);
+  btn._armTimer = setTimeout(function() { disarmConfirm(btn); }, CONFIRM_WINDOW_MS);
+  return false;
+}
+
+function disarmConfirm(btn) {
+  if (!btn) return;
+  if (btn._armTimer) { clearTimeout(btn._armTimer); btn._armTimer = null; }
+  if (btn._armed) {
+    btn.classList.remove('armed');
+    btn.textContent = btn._origText;
+  }
+  btn._armed = false;
+}
+
+// Спливаюче повідомлення знизу. action: { label, onClick } — необов'язково.
+var toastTimer = null;
+function showToast(msg, action, sticky) {
+  var el = $('toast');
+  if (!el) return;
+  el.innerHTML = '<span class="toast-msg">' + escapeHtml(msg) + '</span>';
+  if (action) {
+    var b = document.createElement('button');
+    b.className = 'toast-action';
+    b.textContent = action.label;
+    b.addEventListener('click', function() { hideToast(); action.onClick(); });
+    el.appendChild(b);
+  }
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  if (!sticky) toastTimer = setTimeout(hideToast, action ? 8000 : 2500);
+}
+
+function hideToast() {
+  var el = $('toast');
+  if (el) el.classList.remove('show');
+}
+
+// Повідомлення про помилку під полем; зникає при наступному введенні.
+function fieldError(input, msg) {
+  if (!input) return;
+  input.classList.add('invalid');
+  var holder = input.closest('.field') || input.parentNode;
+  var err = holder.querySelector('.field-error');
+  if (!err) {
+    err = document.createElement('div');
+    err.className = 'field-error';
+    holder.appendChild(err);
+  }
+  err.textContent = msg;
+  input.focus();
+  input.addEventListener('input', function clear() {
+    input.classList.remove('invalid');
+    if (err.parentNode) err.parentNode.removeChild(err);
+    input.removeEventListener('input', clear);
+  });
+}
+
+// ── Тема, мова ──────────────────────────────────────────────────────────────
+
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.theme);
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', state.theme === 'light' ? '#faf8f4' : '#0a0a0a');
+  var btn = $('themeBtn');
+  if (btn) {
+    btn.textContent = state.theme === 'dark' ? '☀' : '☾';
+    btn.setAttribute('aria-label', tr('ariaTheme'));
+  }
+}
+
+function renderI18n() {
+  document.documentElement.lang = state.lang;
+  document.title = tr('title');
+  var els = document.querySelectorAll('[data-i18n]');
+  for (var i = 0; i < els.length; i++) {
+    var key = els[i].getAttribute('data-i18n');
+    if (T[state.lang][key]) els[i].textContent = T[state.lang][key];
+  }
+  var ariaEls = document.querySelectorAll('[data-i18n-aria]');
+  for (var k = 0; k < ariaEls.length; k++) {
+    ariaEls[k].setAttribute('aria-label', tr(ariaEls[k].getAttribute('data-i18n-aria')));
+  }
+  var langBtns = document.querySelectorAll('#langToggle button');
+  for (var j = 0; j < langBtns.length; j++) {
+    var active = langBtns[j].getAttribute('data-lang') === state.lang;
+    langBtns[j].classList.toggle('active', active);
+    langBtns[j].setAttribute('aria-pressed', active ? 'true' : 'false');
+  }
+  applyTheme();
+}
+
+function renderAll() {
+  renderI18n();
+  renderTimer();
+  renderStreams();
+  renderPreparations();
+  updateSpeedDisplay();
+  renderViews();
+}
+
+// ── Секундомір і швидкість ──────────────────────────────────────────────────
+
+function timerPhase() {
+  if (state.timer.running) return 'running';
+  if (state.timer.elapsedMs > 0 || state.timer.frozenElapsedMs > 0) return 'stopped';
+  return 'idle';
+}
+
+function renderTimer() {
+  var display = $('timerDisplay');
+  var lapTimeEl = $('lapTime');
+  var lapRow = $('lapDisplay');
+  var btn1 = $('timerBtn');
+  var btn2 = $('timerBtn2');
+  var phase = timerPhase();
+
+  display.textContent = fmtTime(state.timer.elapsedMs);
+  display.className = 'timer-display ' + (phase === 'running' ? 'running' : (phase === 'idle' ? 'idle' : ''));
+
+  if (state.timer.frozenElapsedMs > 0) {
+    lapTimeEl.textContent = fmtTime(state.timer.frozenElapsedMs);
+    lapRow.classList.remove('empty');
+  } else {
+    lapTimeEl.textContent = '—';
+    lapRow.classList.add('empty');
+  }
+
+  disarmConfirm(btn1);
+  disarmConfirm(btn2);
+  if (phase === 'idle') {
+    btn1.textContent = tr('start');
+    btn1.className = 'btn btn-primary';
+    btn2.classList.add('hidden');
+  } else if (phase === 'running') {
+    btn1.textContent = tr('lap');
+    btn1.className = 'btn btn-primary';
+    btn2.textContent = tr('stopBtn');
+    btn2.className = 'btn btn-stop';
+    btn2.classList.remove('hidden');
+  } else {
+    btn1.textContent = tr('start');
+    btn1.className = 'btn btn-primary';
+    btn2.textContent = tr('reset');
+    btn2.className = 'btn btn-secondary';
+    btn2.classList.remove('hidden');
+  }
+}
+
+function onTimerBtn1() {
+  var phase = timerPhase();
+  if (phase === 'idle') { startTimer(); return; }
+  if (phase === 'running') { lapTimer(); return; }
+  // stopped: новий старт стирає поточний вимір — підтверджуємо, якщо є що втрачати
+  if (Calc.streamsTotal(state.streams) > 0 && !confirmTap($('timerBtn'))) return;
+  startTimer();
+}
+
+function onTimerBtn2() {
+  var phase = timerPhase();
+  if (phase === 'running') { stopTimer(); return; }
+  if (phase === 'stopped') {
+    if (!confirmTap($('timerBtn2'))) return;
+    resetTimer();
+  }
+}
+
+function startTimer() {
+  state.timer = { running: true, startMs: Date.now(), elapsedMs: 0, frozenElapsedMs: 0 };
+  state.streams.forEach(function(s) { s.after = ''; });
+  vibrate(50);
+  clearInterval(timerInterval);
+  timerInterval = setInterval(tickTimer, 100);
+  acquireWakeLock();
+  saveState();
+  renderTimer();
+  renderStreams();
+  updateSpeedDisplay();
+}
+
+function lapTimer() {
+  if (state.timer.elapsedMs < 500) return; // захист від випадкового подвійного тапу
+  state.timer.frozenElapsedMs = state.timer.elapsedMs;
+  state.speedMode = 'calc';
+  vibrate([40, 40, 80]);
+  saveState();
+  renderTimer();
+  updateSpeedDisplay();
+}
+
+function stopTimer() {
+  if (!state.timer.running) return;
+  state.timer.elapsedMs = Date.now() - state.timer.startMs;
+  state.timer.frozenElapsedMs = state.timer.elapsedMs; // СТОП = фінальне коло
+  state.timer.running = false;
+  state.speedMode = 'calc';
+  clearInterval(timerInterval);
+  releaseWakeLock();
+  vibrate([40, 40, 80]);
+  saveState();
+  renderTimer();
+  updateSpeedDisplay();
+}
+
+function resetTimer() {
+  state.timer = { running: false, startMs: null, elapsedMs: 0, frozenElapsedMs: 0 };
+  state.streams = [
+    { id: uid(), before: '', after: '' },
+    { id: uid(), before: '', after: '' }
+  ];
+  clearInterval(timerInterval);
+  releaseWakeLock();
+  saveState();
+  renderTimer();
+  renderStreams();
+  updateSpeedDisplay();
+}
+
+// Запис у localStorage не частіше, ніж раз на ~3 с.
+var lastTimerSaveMs = 0;
+function tickTimer() {
+  if (!state.timer.running) return;
+  state.timer.elapsedMs = Date.now() - state.timer.startMs;
+  $('timerDisplay').textContent = fmtTime(state.timer.elapsedMs);
+  var now = Date.now();
+  if (now - lastTimerSaveMs > 3000) {
+    lastTimerSaveMs = now;
+    saveState();
+  }
+}
+
+// Wake Lock: не гасити екран, поки біжить секундомір.
+var wakeLock = null;
+function acquireWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  if (document.visibilityState !== 'visible') return;
+  navigator.wakeLock.request('screen').then(function(lock) {
+    wakeLock = lock;
+    lock.addEventListener('release', function() { wakeLock = null; });
+  }).catch(function() { /* не критично */ });
+}
+function releaseWakeLock() {
+  if (wakeLock) {
+    try { wakeLock.release(); } catch (e) {}
+    wakeLock = null;
+  }
+}
+
+function calculatedSpeed() {
+  return Calc.speedKgPerMin(Calc.streamsTotal(state.streams), state.timer.frozenElapsedMs);
+}
+
+function currentSpeed() {
+  if (state.speedMode === 'manual') return state.manualSpeed > 0 ? state.manualSpeed : 0;
+  var calc = calculatedSpeed();
+  return calc !== null ? calc : 0;
+}
+
+function setSpeedMode(mode) {
+  if (mode !== 'calc' && mode !== 'manual') return;
+  state.speedMode = mode;
+  saveState();
+  updateSpeedDisplay();
+  if (mode === 'manual') {
+    var inp = $('manualSpeed');
+    if (inp) inp.focus();
+  }
+}
+
+function updateSpeedDisplay() {
+  var speed = currentSpeed();
+  var numEl = $('speedNum');
+  var hourEl = $('speedHour');
+  if (speed > 0) {
+    numEl.className = 'num';
+    numEl.textContent = fmtNum(speed, speed < 100 ? 1 : 0);
+    hourEl.textContent = fmtNum(speed * 60);
+  } else {
+    numEl.className = 'num zero';
+    numEl.textContent = '0';
+    hourEl.textContent = '0';
+  }
+
+  var modeBtns = document.querySelectorAll('#speedMode button');
+  for (var i = 0; i < modeBtns.length; i++) {
+    var on = modeBtns[i].getAttribute('data-mode') === state.speedMode;
+    modeBtns[i].classList.toggle('active', on);
+    modeBtns[i].setAttribute('aria-checked', on ? 'true' : 'false');
+  }
+  var manualRow = $('manualRow');
+  var manualInput = $('manualSpeed');
+  manualRow.classList.toggle('hidden', state.speedMode !== 'manual');
+  if (manualInput && document.activeElement !== manualInput) {
+    manualInput.value = state.manualSpeed > 0 ? state.manualSpeed : '';
+  }
+
+  // Підказка про другий, неактивний режим.
+  var hint = $('speedHint');
+  var calc = calculatedSpeed();
+  var hintText = '';
+  if (state.speedMode === 'manual') {
+    hintText = calc !== null
+      ? tr('hintCalc') + ': ' + fmtNum(calc, calc < 100 ? 1 : 0) + ' ' + tr('kgPerMin') + ' · ' + tr('hintSwitch')
+      : '';
+  } else {
+    if (calc === null) {
+      hintText = tr('hintNoData');
+      if (state.manualSpeed > 0) hintText += ' · ' + tr('hintManual') + ': ' + fmtNum(state.manualSpeed, state.manualSpeed < 100 ? 1 : 0) + ' ' + tr('kgPerMin');
+    } else if (state.manualSpeed > 0) {
+      hintText = tr('hintManual') + ': ' + fmtNum(state.manualSpeed, state.manualSpeed < 100 ? 1 : 0) + ' ' + tr('kgPerMin') + ' · ' + tr('hintSwitch');
+    }
+  }
+  hint.textContent = hintText;
+  hint.classList.toggle('hidden', !hintText);
+
+  refreshPrepNumbers();
+}
+
+// ── Ваги (потоки) ───────────────────────────────────────────────────────────
+
+function ensureStreams() {
+  while (state.streams.length < 2) {
+    state.streams.push({ id: uid(), before: '', after: '' });
+  }
+}
+
+function refreshStreamDeltas() {
+  var total = Calc.streamsTotal(state.streams);
+  var blocks = document.querySelectorAll('#streamsList .stream-block');
+  var multi = state.streams.length > 1;
+  state.streams.forEach(function(stream, idx) {
+    if (!blocks[idx]) return;
+    var deltaEl = blocks[idx].querySelector('[data-role="delta"]');
+    if (!deltaEl) return;
+    var d = Calc.streamDelta(stream);
+    if (d > 0) {
+      var content = 'Δ <strong>' + fmtNum(d) + '</strong> ' + tr('kg');
+      if (multi && total > 0) content += ' · ' + fmtNum(d / total * 100, 0) + '%';
+      deltaEl.innerHTML = content;
+    } else {
+      deltaEl.innerHTML = '';
+    }
+  });
+  $('streamTotal').textContent = fmtNum(total);
+}
+
+function onStreamInput() {
+  refreshStreamDeltas();
+  updateSpeedDisplay();
+  saveState();
+}
+
+function renderStreams() {
+  var list = $('streamsList');
+  list.innerHTML = '';
+  ensureStreams();
+
+  state.streams.forEach(function(stream, idx) {
+    var block = document.createElement('div');
+    block.className = 'stream-block';
+    var showRemove = state.streams.length > 2;
+
+    var html = '';
+    html += '<div class="stream-head">';
+    html += '<div class="stream-num">№' + (idx + 1) + '</div>';
+    html += '<div class="stream-delta-inline" data-role="delta"></div>';
+    if (showRemove) html += '<button class="icon-btn remove-stream" data-role="remove" aria-label="' + escapeHtml(tr('removeStream')) + '">✕</button>';
+    html += '</div>';
+    html += '<div class="stream-pair">';
+    html += '<label class="stream-field"><span class="stream-field-label">' + tr('before') + '</span>';
+    html += '<input type="number" inputmode="decimal" min="0" data-role="before" value="' + escapeHtml(String(stream.before)) + '" placeholder="0"></label>';
+    html += '<div class="arrow" aria-hidden="true">→</div>';
+    html += '<label class="stream-field"><span class="stream-field-label">' + tr('after') + '</span>';
+    html += '<input type="number" inputmode="decimal" min="0" data-role="after" value="' + escapeHtml(String(stream.after)) + '" placeholder="0"></label>';
+    html += '</div>';
+    html += '<div class="stream-presets" data-role="presets"></div>';
+    block.innerHTML = html;
+
+    var beforeInput = block.querySelector('[data-role="before"]');
+    var afterInput = block.querySelector('[data-role="after"]');
+    var presetsEl = block.querySelector('[data-role="presets"]');
+
+    beforeInput.addEventListener('input', function(e) {
+      stream.before = e.target.value === '' ? '' : Number(e.target.value);
+      onStreamInput();
+    });
+    afterInput.addEventListener('input', function(e) {
+      stream.after = e.target.value === '' ? '' : Number(e.target.value);
+      onStreamInput();
+    });
+
+    if (showRemove) {
+      block.querySelector('[data-role="remove"]').addEventListener('click', function() {
+        state.streams = state.streams.filter(function(s) { return s.id !== stream.id; });
+        renderStreams();
+        updateSpeedDisplay();
+        saveState();
+      });
+    }
+
+    PRESETS.forEach(function(p) {
+      var b = document.createElement('button');
+      b.className = 'preset-btn';
+      b.textContent = p;
+      b.addEventListener('click', function() {
+        stream.after = p;
+        afterInput.value = p;
+        onStreamInput();
+      });
+      presetsEl.appendChild(b);
+    });
+
+    list.appendChild(block);
+  });
+
+  refreshStreamDeltas();
+  $('addStreamBtn').disabled = state.streams.length >= MAX_STREAMS;
+}
+
+// ── Препарати (головний екран) ──────────────────────────────────────────────
+
+function findPrep(pid) {
+  for (var i = 0; i < state.preparations.length; i++) {
+    if (sameId(state.preparations[i].id, pid)) return state.preparations[i];
+  }
+  return null;
+}
+
+// Назва/норма препарату для сесії: спершу знімок у сесії, потім поточний список.
+function sessionPrep(sess, pid) {
+  var snap = sess.prepSnapshots ? (sess.prepSnapshots[pid] || sess.prepSnapshots[String(pid)]) : null;
+  var live = findPrep(pid);
+  if (live) return { id: live.id, name: live.name, norm: live.norm, canVolume: live.canVolume };
+  if (snap) return { id: pid, name: snap.name, norm: snap.norm, canVolume: snap.canVolume };
+  return null;
+}
+
+function snapshotPrep(sess, pid) {
+  var p = findPrep(pid);
+  if (!p) return;
+  if (!sess.prepSnapshots) sess.prepSnapshots = {};
+  sess.prepSnapshots[String(pid)] = { name: p.name, norm: p.norm, canVolume: p.canVolume || 5 };
+}
+
+// Препарат задіяний у сесії, що вже йде (чернетку можна правити вільно).
+function prepInCurrentSession(pid) {
+  var s = state.session;
+  if (!s || !s.startedAt || s.endedAt) return false;
+  return s.activePrepIds.some(function(x) { return sameId(x, pid); });
+}
+
+function prepCardNumbers(prep, speed) {
+  var ml = prep.active ? Calc.mlPerMin(speed, prep.norm) : null;
+  var minPerL = ml !== null ? Calc.minutesPerLiter(ml) : null;
+  return {
+    mlText: ml !== null ? fmtNum(ml, ml < 100 ? 1 : 0) : '—',
+    mlDimmed: ml === null,
+    rtText: minPerL !== null ? fmtMinutes(minPerL) : '—',
+    rtDimmed: minPerL === null
+  };
+}
+
+function refreshPrepNumbers() {
+  var speed = currentSpeed();
+  var cards = document.querySelectorAll('#prepList .prep-card[data-prep-id]');
+  for (var i = 0; i < cards.length; i++) {
+    var prep = findPrep(cards[i].getAttribute('data-prep-id'));
+    if (!prep) continue;
+    var n = prepCardNumbers(prep, speed);
+    var mlEl = cards[i].querySelector('.ml-min');
+    var rtEl = cards[i].querySelector('.po-runtime');
+    if (mlEl) { mlEl.textContent = n.mlText; mlEl.classList.toggle('dimmed', n.mlDimmed); }
+    if (rtEl) { rtEl.querySelector('[data-role="rt"]').textContent = n.rtText; rtEl.classList.toggle('dimmed', n.rtDimmed); }
+  }
+}
+
+function renderPreparations() {
+  var list = $('prepList');
+  list.innerHTML = '';
+  var speed = currentSpeed();
+
+  state.preparations.forEach(function(prep) {
+    var card = document.createElement('div');
+    card.className = 'prep-card' + (prep.active ? ' active' : '');
+    card.setAttribute('data-prep-id', String(prep.id));
+
+    if (sameId(state.editingPrepId, prep.id)) {
+      renderPrepEdit(card, prep);
+    } else {
+      renderPrepCard(card, prep, speed);
+    }
+    list.appendChild(card);
+  });
+}
+
+function renderPrepEdit(card, prep) {
+  var html = '';
+  html += '<div class="prep-edit">';
+  html += '<div class="field-row field"><label for="pn' + prep.id + '">' + tr('name') + '</label>';
+  html += '<input id="pn' + prep.id + '" type="text" data-role="editName" value="' + escapeHtml(prep.name) + '" placeholder="' + escapeHtml(tr('namePlaceholder')) + '" autocomplete="off"></div>';
+  html += '<div class="field-row field"><label for="pr' + prep.id + '">' + tr('norm') + '</label>';
+  html += '<input id="pr' + prep.id + '" type="number" inputmode="decimal" min="0" data-role="editNorm" value="' + prep.norm + '">';
+  html += '<span class="unit-tag">' + tr('mlPerTon') + '</span></div>';
+  html += '<div class="field-row field"><label for="pc' + prep.id + '">' + tr('canVolume') + '</label>';
+  html += '<input id="pc' + prep.id + '" type="number" inputmode="decimal" min="0" data-role="editCan" value="' + (prep.canVolume || 5) + '">';
+  html += '<span class="unit-tag">' + tr('liter') + '</span></div>';
+  html += '<div class="edit-actions">';
+  html += '<button class="btn btn-secondary" data-action="cancel">' + tr('cancelBtn') + '</button>';
+  html += '<button class="btn btn-primary" data-action="save">' + tr('saveBtn') + '</button>';
+  html += '</div>';
+  html += '</div>';
+  card.innerHTML = html;
+
+  card.querySelector('[data-action="cancel"]').addEventListener('click', function() {
+    if (!prep.name) {
+      state.preparations = state.preparations.filter(function(p) { return p.id !== prep.id; });
+    }
+    state.editingPrepId = null;
+    saveState();
+    renderPreparations();
+  });
+  card.querySelector('[data-action="save"]').addEventListener('click', function() {
+    var nameEl = card.querySelector('[data-role="editName"]');
+    var normEl = card.querySelector('[data-role="editNorm"]');
+    var canEl = card.querySelector('[data-role="editCan"]');
+    var newName = nameEl.value.trim();
+    var newNorm = Number(normEl.value);
+    var newCan = Number(canEl.value);
+    if (!newName) { fieldError(nameEl, tr('nameRequired')); return; }
+    if (!isFinite(newNorm) || newNorm <= 0) { fieldError(normEl, tr('normRequired')); return; }
+    if (!isFinite(newCan) || newCan <= 0) { fieldError(canEl, tr('canRequired')); return; }
+    prep.name = newName;
+    prep.norm = newNorm;
+    prep.canVolume = newCan;
+    state.editingPrepId = null;
+    saveState();
+    renderPreparations();
+    if (state.view === 'session') renderSessionView();
+  });
+  setTimeout(function() { var f = card.querySelector('[data-role="editName"]'); if (f) f.focus(); }, 30);
+}
+
+function renderPrepCard(card, prep, speed) {
+  var n = prepCardNumbers(prep, speed);
+  var html = '';
+  html += '<div class="prep-head">';
+  html += '<button class="prep-checkbox ' + (prep.active ? 'checked' : '') + '" role="checkbox" aria-checked="' + (prep.active ? 'true' : 'false') + '" data-action="toggle" aria-label="' + escapeHtml(tr('ariaToggle') + ' ' + prep.name) + '"></button>';
+  html += '<div class="prep-name">' + escapeHtml(prep.name) + '<span class="prep-norm-inline">' + fmtNum(prep.norm, 0) + ' ' + tr('mlPerTon') + '</span></div>';
+  html += '<div class="prep-actions">';
+  html += '<button class="icon-btn prep-action-btn" data-action="edit" aria-label="' + escapeHtml(tr('ariaEdit') + ' ' + prep.name) + '">✎</button>';
+  html += '<button class="icon-btn prep-action-btn del confirm-btn" data-action="delete" aria-label="' + escapeHtml(tr('ariaDelete') + ' ' + prep.name) + '">✕</button>';
+  html += '</div>';
+  html += '</div>';
+  html += '<div class="prep-output">';
+  html += '<div class="po-main">';
+  html += '<span class="arrow" aria-hidden="true">→</span>';
+  html += '<span class="ml-min ' + (n.mlDimmed ? 'dimmed' : '') + '">' + n.mlText + '</span>';
+  html += '<span class="ml-unit">' + tr('mlPerMin') + '</span>';
+  html += '</div>';
+  html += '<div class="po-runtime ' + (n.rtDimmed ? 'dimmed' : '') + '">';
+  html += '<span class="rt-label">' + tr('perLiterLabel') + '</span>';
+  html += '<span data-role="rt">' + n.rtText + '</span>';
+  html += '</div>';
+  html += '</div>';
+  html += '<div class="prep-reverse">';
+  html += '<input type="number" inputmode="decimal" min="0" placeholder="0" data-role="revMl" aria-label="' + escapeHtml(tr('mlPerMin')) + '">';
+  html += '<span class="rev-unit">' + tr('mlPerMin') + '</span>';
+  html += '<span class="rev-arrow" aria-hidden="true">→</span>';
+  html += '<span class="rev-result" data-role="revResult">—</span>';
+  html += '<span class="rev-result-unit">' + tr('kgPerHour') + '</span>';
+  html += '</div>';
+  card.innerHTML = html;
+
+  card.querySelector('[data-role="revMl"]').addEventListener('input', function(e) {
+    var ml = Number(e.target.value) || 0;
+    var kgh = Calc.kgPerHourFromMlPerMin(ml, prep.norm);
+    card.querySelector('[data-role="revResult"]').textContent = kgh !== null ? fmtNum(kgh, 0) : '—';
+  });
+
+  card.querySelector('[data-action="toggle"]').addEventListener('click', function() {
+    prep.active = !prep.active;
+    saveState();
+    renderPreparations();
+    refreshPrepNumbers();
+  });
+  card.querySelector('[data-action="edit"]').addEventListener('click', function() {
+    state.editingPrepId = prep.id;
+    renderPreparations();
+  });
+  var delBtn = card.querySelector('[data-action="delete"]');
+  delBtn.addEventListener('click', function() {
+    if (prepInCurrentSession(prep.id)) { showToast(tr('prepInUse')); return; }
+    if (!confirmTap(delBtn)) return;
+    state.preparations = state.preparations.filter(function(p) { return p.id !== prep.id; });
+    if (state.session && !state.session.startedAt) {
+      state.session.activePrepIds = state.session.activePrepIds.filter(function(x) { return !sameId(x, prep.id); });
+    }
+    saveState();
+    renderPreparations();
+  });
+}
+
+function addPreparation() {
+  var newId = Date.now();
+  state.preparations.push({ id: newId, name: '', norm: 250, canVolume: 5, active: true });
+  state.editingPrepId = newId;
+  renderPreparations();
+}
+
+// ── Сесія: дані ─────────────────────────────────────────────────────────────
+
 function nextSessionNumber() {
   var max = 0;
-  state.sessions.forEach(function(s) { if (s.number > max) max = s.number; });
-  if (state.session && state.session.number > max) max = state.session.number;
+  allSessions().forEach(function(s) { if (s.number > max) max = s.number; });
   return max + 1;
 }
 
@@ -795,8 +1042,9 @@ function createDraftSession() {
     number: nextSessionNumber(),
     variety: '',
     containerTypes: [],
-    activePrepIds: state.preparations.filter(function(p) { return p.active; }).map(function(p) { return p.id; }),
+    activePrepIds: state.preparations.filter(function(p) { return p.active && p.name; }).map(function(p) { return p.id; }),
     canVolumes: {},
+    prepSnapshots: {},
     startedAt: null,
     endedAt: null,
     paused: false,
@@ -808,173 +1056,112 @@ function createDraftSession() {
 }
 
 function startSession() {
-  if (!state.session) return;
-  if (!state.session.containerTypes || state.session.containerTypes.length === 0) {
-    alert(tr('needContainer'));
+  var s = state.session;
+  if (!s || s.startedAt) return;
+  if (!s.containerTypes || s.containerTypes.length === 0) {
+    showToast(tr('needContainer'));
+    var addBtn = document.querySelector('#sessionView [data-action="add-ctype"]');
+    if (addBtn) { addBtn.classList.add('attention'); addBtn.focus(); }
     return;
   }
-  state.session.canVolumes = {};
-  state.session.activePrepIds.forEach(function(pid) {
+  s.canVolumes = {};
+  s.prepSnapshots = {};
+  s.activePrepIds = s.activePrepIds.filter(function(pid) { return !!findPrep(pid); });
+  s.activePrepIds.forEach(function(pid) {
     var p = findPrep(pid);
-    if (p) state.session.canVolumes[pid] = p.canVolume || 5;
+    s.canVolumes[pid] = p.canVolume || 5;
+    snapshotPrep(s, pid);
   });
-  var v = (state.session.variety || '').trim();
+  var v = (s.variety || '').trim();
+  s.variety = v;
   if (v && state.varieties.indexOf(v) === -1) {
     state.varieties.unshift(v);
-    if (state.varieties.length > 10) state.varieties.length = 10;
+    if (state.varieties.length > MAX_VARIETIES) state.varieties.length = MAX_VARIETIES;
   }
-  state.session.startedAt = Date.now();
+  s.startedAt = Date.now();
+  state.ui.logOpen = false;
+  state.ui.addPrepOpen = false;
   saveState();
   startSessionTicker();
   renderSessionView();
 }
 
 function pauseSession() {
-  if (!state.session || !state.session.startedAt || state.session.paused || state.session.endedAt) return;
-  state.session.paused = true;
-  state.session.pauseStartedAt = Date.now();
+  var s = state.session;
+  if (!s || !s.startedAt || s.paused || s.endedAt) return;
+  s.paused = true;
+  s.pauseStartedAt = Date.now();
   saveState();
   renderSessionView();
 }
 
 function resumeSession() {
-  if (!state.session || !state.session.paused) return;
-  state.session.totalPausedMs += Date.now() - state.session.pauseStartedAt;
-  state.session.paused = false;
-  state.session.pauseStartedAt = null;
+  var s = state.session;
+  if (!s || !s.paused) return;
+  s.totalPausedMs += Date.now() - s.pauseStartedAt;
+  s.paused = false;
+  s.pauseStartedAt = null;
   saveState();
   renderSessionView();
 }
 
 function endSession() {
-  if (!state.session || !state.session.startedAt || state.session.endedAt) return;
-  if (state.session.paused) {
-    state.session.totalPausedMs += Date.now() - state.session.pauseStartedAt;
-    state.session.paused = false;
-    state.session.pauseStartedAt = null;
+  var s = state.session;
+  if (!s || !s.startedAt || s.endedAt) return;
+  if (s.paused) {
+    s.totalPausedMs += Date.now() - s.pauseStartedAt;
+    s.paused = false;
+    s.pauseStartedAt = null;
   }
-  state.session.endedAt = Date.now();
+  s.endedAt = Date.now();
   stopSessionTicker();
   saveState();
   renderSessionView();
 }
 
+// Щойно завершену сесію — в архів, на головний екран.
 function archiveSession() {
-  if (!state.session || !state.session.endedAt) return;
-  // If this session already exists in history (came from view), just clear it
-  var alreadyInHistory = state.sessions.some(function(s) { return s.id === state.session.id; });
-  if (!alreadyInHistory) {
-    state.sessions.push(state.session);
-  }
-  state.session = null;
-  // Return to history if we came from there, else to main
-  if (alreadyInHistory) {
-    state.view = 'history';
-  } else {
-    state.view = 'main';
-  }
-  saveState();
-  renderViews();
-}
-
-function discardDraftSession() {
-  if (!state.session) return;
-  if (state.session.startedAt) return;
+  var s = state.session;
+  if (!s || !s.endedAt) return;
+  if (!state.sessions.some(function(x) { return x.id === s.id; })) state.sessions.push(s);
   state.session = null;
   state.view = 'main';
   saveState();
   renderViews();
 }
 
-function findPrep(pid) {
-  for (var i = 0; i < state.preparations.length; i++) {
-    if (state.preparations[i].id === pid) return state.preparations[i];
-  }
-  return null;
+function discardDraftSession() {
+  if (!state.session || state.session.startedAt) return;
+  state.session = null;
+  state.view = 'main';
+  saveState();
+  renderViews();
 }
 
-function sessionElapsedMs() {
-  if (!state.session || !state.session.startedAt) return 0;
-  var endTs = state.session.endedAt || Date.now();
-  var pausedMs = state.session.totalPausedMs;
-  if (state.session.paused) pausedMs += Date.now() - state.session.pauseStartedAt;
-  return Math.max(0, endTs - state.session.startedAt - pausedMs);
+function deleteCurrentSession() {
+  state.session = null;
+  state.view = 'main';
+  stopSessionTicker();
+  saveState();
+  renderViews();
 }
 
-function containerCount(typeId, sess) {
-  var s = sess || state.session;
-  if (!s) return 0;
-  var c = 0;
-  s.events.forEach(function(e) {
-    if (e.type === 'container' && e.refId === typeId) c++;
-  });
-  return c;
-}
-
-function canisterCount(prepId, sess) {
-  var s = sess || state.session;
-  if (!s) return 0;
-  var c = 0;
-  s.events.forEach(function(e) {
-    if (e.type === 'canister' && e.refId === prepId) c++;
-  });
-  return c;
-}
-
-function containerCorrectionKg(typeId, sess) {
-  var s = sess || state.session;
-  if (!s) return 0;
-  var sum = 0;
-  s.events.forEach(function(e) {
-    if (e.type === 'container_corr' && e.refId === typeId) sum += (e.deltaKg || 0);
-  });
-  return sum;
-}
-
-function canisterCorrectionL(prepId, sess) {
-  var s = sess || state.session;
-  if (!s) return 0;
-  var sum = 0;
-  s.events.forEach(function(e) {
-    if (e.type === 'canister_corr' && e.refId === prepId) sum += (e.deltaL || 0);
-  });
-  return sum;
-}
-
-function sessionTotalKg() {
-  if (!state.session) return 0;
-  var sum = 0;
-  state.session.containerTypes.forEach(function(t) {
-    sum += containerCount(t.id) * t.weight + containerCorrectionKg(t.id);
-  });
-  return sum;
-}
-
-function sessionPrepLiters(prepId) {
-  if (!state.session) return 0;
-  var v = state.session.canVolumes[prepId];
-  if (v == null) {
-    var p = findPrep(prepId);
-    v = p ? (p.canVolume || 5) : 5;
-  }
-  return canisterCount(prepId) * v + canisterCorrectionL(prepId);
+function sessionElapsedMs(sess) {
+  return Calc.sessionElapsedMs(sess || state.session, Date.now());
 }
 
 function addContainerType(weight, kind, size) {
-  if (!state.session) return;
-  state.session.containerTypes.push({
-    id: uid(),
-    weight: weight,
-    kind: kind || 'ящик',
-    size: size || ''
-  });
+  var s = state.session;
+  if (!s) return;
+  s.containerTypes.push({ id: uid(), weight: weight, kind: kind || 'ящик', size: size || '' });
   saveState();
   renderSessionView();
 }
 
 function updateContainerType(typeId, patch) {
-  if (!state.session) return;
-  var t = state.session.containerTypes.find(function(x) { return x.id === typeId; });
+  var s = state.session;
+  if (!s) return;
+  var t = s.containerTypes.find(function(x) { return x.id === typeId; });
   if (!t) return;
   if (patch.weight != null) t.weight = patch.weight;
   if (patch.kind != null) t.kind = patch.kind;
@@ -982,170 +1169,144 @@ function updateContainerType(typeId, patch) {
   saveState();
 }
 
+function pushEvent(ev) {
+  ev.id = uid();
+  ev.ts = ev.ts || Date.now();
+  state.session.events.push(ev);
+}
+
 function applyContainerCorrection(typeId, deltaKg) {
   if (!state.session || !deltaKg) return;
-  state.session.events.push({
-    id: uid(),
-    ts: Date.now(),
-    type: 'container_corr',
-    refId: typeId,
-    deltaKg: deltaKg
-  });
-  vibrate(30);
+  pushEvent({ type: 'container_corr', refId: typeId, deltaKg: deltaKg });
   saveState();
 }
 
 function applyCanisterCorrection(prepId, deltaL) {
   if (!state.session || !deltaL) return;
-  state.session.events.push({
-    id: uid(),
-    ts: Date.now(),
-    type: 'canister_corr',
-    refId: prepId,
-    deltaL: deltaL
-  });
-  vibrate(30);
+  pushEvent({ type: 'canister_corr', refId: prepId, deltaL: deltaL });
   saveState();
 }
 
-// Set count to specific value: adjust by adding or removing events
-function setContainerCount(typeId, newCount) {
-  if (!state.session) return;
+// Виставити лічильник у задане значення: додати або зняти події (найновіші першими).
+function setEventCount(type, refId, newCount) {
+  var s = state.session;
+  if (!s) return;
   if (newCount < 0) newCount = 0;
-  var current = containerCount(typeId);
+  var current = s.events.filter(function(e) { return e.type === type && sameId(e.refId, refId); }).length;
   if (newCount === current) return;
   if (newCount > current) {
-    var add = newCount - current;
-    for (var i = 0; i < add; i++) {
-      state.session.events.push({
-        id: uid(), ts: Date.now() + i, type: 'container', refId: typeId
-      });
-    }
-  } else {
-    // remove (newest first) until count matches
-    var toRemove = current - newCount;
-    var idx = state.session.events.length - 1;
-    while (toRemove > 0 && idx >= 0) {
-      var e = state.session.events[idx];
-      if (e.type === 'container' && e.refId === typeId) {
-        state.session.events.splice(idx, 1);
-        toRemove--;
-      }
-      idx--;
-    }
-  }
-  saveState();
-}
-
-function setCanisterCount(prepId, newCount) {
-  if (!state.session) return;
-  if (newCount < 0) newCount = 0;
-  var current = canisterCount(prepId);
-  if (newCount === current) return;
-  if (newCount > current) {
-    var add = newCount - current;
-    for (var i = 0; i < add; i++) {
-      state.session.events.push({
-        id: uid(), ts: Date.now() + i, type: 'canister', refId: prepId
-      });
+    for (var i = 0; i < newCount - current; i++) {
+      pushEvent({ type: type, refId: refId, ts: Date.now() + i });
     }
   } else {
     var toRemove = current - newCount;
-    var idx = state.session.events.length - 1;
-    while (toRemove > 0 && idx >= 0) {
-      var e = state.session.events[idx];
-      if (e.type === 'canister' && e.refId === prepId) {
-        state.session.events.splice(idx, 1);
+    for (var idx = s.events.length - 1; idx >= 0 && toRemove > 0; idx--) {
+      var e = s.events[idx];
+      if (e.type === type && sameId(e.refId, refId)) {
+        s.events.splice(idx, 1);
         toRemove--;
       }
-      idx--;
     }
   }
   saveState();
 }
 
 function removeContainerType(typeId) {
-  if (!state.session) return;
-  // Видаляємо тип і всі події з ним
-  state.session.containerTypes = state.session.containerTypes.filter(function(t) { return t.id !== typeId; });
-  state.session.events = state.session.events.filter(function(e) {
-    return !(e.type === 'container' && e.refId === typeId);
+  var s = state.session;
+  if (!s) return;
+  s.containerTypes = s.containerTypes.filter(function(t) { return t.id !== typeId; });
+  // разом із подіями типу — і його корекціями, щоб не лишались «сироти»
+  s.events = s.events.filter(function(e) {
+    return !((e.type === 'container' || e.type === 'container_corr') && e.refId === typeId);
   });
-  state.editingCtypeId = null;
   saveState();
   renderSessionView();
 }
 
 function removePrepFromSession(prepId) {
-  if (!state.session) return;
-  state.session.activePrepIds = state.session.activePrepIds.filter(function(p) { return p !== prepId; });
-  state.session.events = state.session.events.filter(function(e) {
-    return !(e.type === 'canister' && e.refId === prepId);
+  var s = state.session;
+  if (!s) return;
+  s.activePrepIds = s.activePrepIds.filter(function(p) { return !sameId(p, prepId); });
+  s.events = s.events.filter(function(e) {
+    return !((e.type === 'canister' || e.type === 'canister_corr') && sameId(e.refId, prepId));
   });
-  delete state.session.canVolumes[prepId];
-  state.editingPrepIdInSession = null;
+  delete s.canVolumes[prepId];
+  delete s.canVolumes[String(prepId)];
   saveState();
   renderSessionView();
 }
 
 function addPrepToSession(prepId) {
-  if (!state.session) return;
-  if (state.session.activePrepIds.indexOf(prepId) !== -1) return;
-  state.session.activePrepIds.push(prepId);
+  var s = state.session;
   var p = findPrep(prepId);
-  if (p) state.session.canVolumes[prepId] = p.canVolume || 5;
+  if (!s || !p) return;
+  if (s.activePrepIds.some(function(x) { return sameId(x, p.id); })) return;
+  s.activePrepIds.push(p.id);
+  s.canVolumes[p.id] = p.canVolume || 5;
+  snapshotPrep(s, p.id);
+  state.ui.addPrepOpen = false;
   saveState();
   renderSessionView();
 }
 
-function deleteCurrentSession() {
-  state.session = null;
-  state.editingCtypeId = null;
-  state.editingPrepIdInSession = null;
-  state.view = 'main';
-  stopSessionTicker();
-  saveState();
-  renderViews();
+function sessionAcceptsEvents() {
+  var s = state.session;
+  return !!(s && s.startedAt && !s.endedAt && !s.paused);
 }
 
 function addContainerEvent(typeId) {
-  if (!state.session || !state.session.startedAt || state.session.endedAt) return;
-  if (state.session.paused) return;
-  state.session.events.push({ id: uid(), ts: Date.now(), type: 'container', refId: typeId });
+  if (!sessionAcceptsEvents()) return;
+  pushEvent({ type: 'container', refId: typeId });
   vibrate(30);
   saveState();
-  renderSessionView();
+  refreshSessionNumbers();
 }
 
 function addCanisterEvent(prepId) {
-  if (!state.session || !state.session.startedAt || state.session.endedAt) return;
-  if (state.session.paused) return;
-  state.session.events.push({ id: uid(), ts: Date.now(), type: 'canister', refId: prepId });
+  if (!sessionAcceptsEvents()) return;
+  var p = findPrep(prepId);
+  pushEvent({ type: 'canister', refId: p ? p.id : prepId });
   vibrate([30, 30, 30]);
   saveState();
-  renderSessionView();
+  refreshSessionNumbers();
+}
+
+// «−1»: зняти останню подію цього типу.
+function undoLastEvent(type, refId) {
+  if (!sessionAcceptsEvents()) return;
+  var s = state.session;
+  for (var idx = s.events.length - 1; idx >= 0; idx--) {
+    var e = s.events[idx];
+    if (e.type === type && sameId(e.refId, refId)) {
+      s.events.splice(idx, 1);
+      vibrate(20);
+      saveState();
+      refreshSessionNumbers();
+      return;
+    }
+  }
 }
 
 function removeEvent(eventId) {
-  if (!state.session) return;
-  state.session.events = state.session.events.filter(function(e) { return e.id !== eventId; });
+  var s = state.session;
+  if (!s) return;
+  s.events = s.events.filter(function(e) { return e.id !== eventId; });
   saveState();
-  renderSessionView();
+  refreshSessionNumbers();
 }
 
 function startSessionTicker() {
-  if (sessionTicker) clearInterval(sessionTicker);
+  stopSessionTicker();
   sessionTicker = setInterval(function() {
-    if (state.view !== 'session') return;
-    if (!state.session || !state.session.startedAt || state.session.endedAt) {
-      stopSessionTicker();
-      return;
+    var s = state.session;
+    if (!s || !s.startedAt || s.endedAt) { stopSessionTicker(); return; }
+    if (s.paused) return;
+    if (state.view === 'session' && !state.viewingSessionId) {
+      var el = $('sessionTimer');
+      if (el) el.textContent = fmtTime(sessionElapsedMs());
+    } else if (state.view === 'main') {
+      renderSessionEntry();
     }
-    if (state.session.paused) return;
-    var el = document.getElementById('sessionTimer');
-    if (el) el.textContent = fmtElapsedHMS(sessionElapsedMs());
-    var tEl = document.getElementById('sessionTonnage');
-    if (tEl) tEl.textContent = fmtNum(sessionTotalKg());
   }, 1000);
 }
 
@@ -1154,44 +1315,35 @@ function stopSessionTicker() {
   sessionTicker = null;
 }
 
-// ── VIEW ROUTING ────────────────────────────────────────────────────────────
+// ── Маршрутизація екранів ───────────────────────────────────────────────────
 
 function renderViews() {
-  var mainEl = document.getElementById('mainView');
-  var sessionEl = document.getElementById('sessionView');
-  var historyEl = document.getElementById('historyView');
-  if (state.view === 'session') {
-    mainEl.classList.add('hidden');
-    if (historyEl) historyEl.classList.add('hidden');
-    sessionEl.classList.remove('hidden');
-    renderSessionView();
-  } else if (state.view === 'history') {
-    mainEl.classList.add('hidden');
-    sessionEl.classList.add('hidden');
-    if (historyEl) {
-      historyEl.classList.remove('hidden');
-      renderHistoryView();
-    }
-  } else {
-    sessionEl.classList.add('hidden');
-    if (historyEl) historyEl.classList.add('hidden');
-    mainEl.classList.remove('hidden');
-    renderSessionEntry();
-  }
+  var mainEl = $('mainView');
+  var sessionEl = $('sessionView');
+  var historyEl = $('historyView');
+  mainEl.classList.toggle('hidden', state.view !== 'main');
+  sessionEl.classList.toggle('hidden', state.view !== 'session');
+  historyEl.classList.toggle('hidden', state.view !== 'history');
+  if (state.view === 'session') renderSessionView();
+  else if (state.view === 'history') renderHistoryView();
+  else renderSessionEntry();
+  window.scrollTo(0, 0);
 }
 
 function renderSessionEntry() {
-  var btn = document.getElementById('sessionEntry');
-  if (!btn) return;
-  if (state.session && state.session.startedAt && !state.session.endedAt) {
-    var elapsed = fmtElapsedHMS(sessionElapsedMs());
-    var pausedTag = state.session.paused ? ' · ' + tr('paused') : '';
+  var btn = $('sessionEntry');
+  var s = state.session;
+  if (s && s.startedAt && !s.endedAt) {
+    var pausedTag = s.paused ? ' · ' + tr('paused') : '';
     btn.className = 'session-entry active';
-    btn.innerHTML = '<div class="se-status">↻ ' + tr('sessionNumber') + state.session.number + ' · ' + elapsed + pausedTag + '</div>'
-      + '<div class="se-meta">' + escapeHtml(state.session.variety || '—') + '</div>';
-  } else if (state.session && !state.session.startedAt) {
+    btn.innerHTML = '<div class="se-status">↻ ' + tr('sessionNumber') + s.number + ' · ' + fmtTime(sessionElapsedMs()) + pausedTag + '</div>'
+      + '<div class="se-meta">' + escapeHtml(s.variety || '—') + ' · ' + fmtNum(Calc.sessionTotalKg(s)) + ' ' + tr('kg') + '</div>';
+  } else if (s && s.endedAt) {
+    btn.className = 'session-entry active';
+    btn.innerHTML = '<div class="se-status">' + tr('sessionNumber') + s.number + ' · ' + tr('sessionCompleted').toLowerCase() + '</div>';
+  } else if (s) {
     btn.className = 'session-entry';
-    btn.innerHTML = '<div class="se-status">' + tr('sessionNumber') + state.session.number + ' · налаштування</div>';
+    btn.innerHTML = '<div class="se-status">' + tr('sessionNumber') + s.number + ' · ' + tr('draft') + '</div>';
   } else {
     btn.className = 'session-entry';
     btn.innerHTML = '<div class="se-status">+ ' + tr('newSession') + '</div>';
@@ -1199,661 +1351,588 @@ function renderSessionEntry() {
 }
 
 function enterSessionView() {
-  if (!state.session) {
-    createDraftSession();
-  }
+  if (!state.session) createDraftSession();
+  state.viewingSessionId = null;
   state.view = 'session';
   renderViews();
-  if (state.session && state.session.startedAt && !state.session.endedAt) {
-    startSessionTicker();
-  }
+  if (state.session.startedAt && !state.session.endedAt) startSessionTicker();
 }
 
 function exitSessionView() {
+  state.viewingSessionId = null;
   state.view = 'main';
   renderViews();
 }
 
-// ── SESSION VIEW RENDER ─────────────────────────────────────────────────────
-
-function renderSessionView() {
-  var root = document.getElementById('sessionView');
-  if (!root) return;
-  if (!state.session) {
-    root.innerHTML = '';
-    return;
+function viewedSession() {
+  if (state.viewingSessionId) {
+    return state.sessions.find(function(x) { return x.id === state.viewingSessionId; }) || null;
   }
-  if (state.session.endedAt) {
-    renderSessionCompleted(root);
-  } else if (state.session.startedAt) {
-    renderSessionActive(root);
-  } else {
-    renderSessionPreStart(root);
-  }
+  return state.session;
 }
 
-function renderSessionPreStart(root) {
-  var s = state.session;
+// ── Сесія: рендер ───────────────────────────────────────────────────────────
+
+function renderSessionView() {
+  var root = $('sessionView');
+  var s = viewedSession();
+  if (!s) { root.innerHTML = ''; return; }
+  if (state.viewingSessionId) renderSessionCompleted(root, s, true);
+  else if (s.endedAt) renderSessionCompleted(root, s, false);
+  else if (s.startedAt) renderSessionActive(root, s);
+  else renderSessionPreStart(root, s);
+}
+
+function ctypeLabel(t) {
+  return t.kind + ' ' + fmtNum(t.weight) + ' ' + tr('kg') + (t.size ? ' · ' + t.size : '');
+}
+
+function sessionHeader(leftHtml, title) {
+  return '<div class="session-header">' + leftHtml
+    + '<h1 class="session-title">' + escapeHtml(title) + '</h1><span class="session-header-spacer"></span></div>';
+}
+
+function renderSessionPreStart(root, s) {
   var html = '';
+  html += sessionHeader('<button class="session-back" data-action="discard">' + tr('backBtn') + '</button>', tr('sessionNumber') + s.number);
 
-  // Header
-  html += '<div class="session-header">';
-  html += '<button class="session-back" data-action="discard">' + tr('cancelSessionBtn') + '</button>';
-  html += '<div class="session-title">' + tr('sessionNumber') + s.number + '</div>';
-  html += '<span style="width:60px;"></span>';
-  html += '</div>';
-
-  // Variety
   html += '<div class="session-form">';
-  html += '<label class="form-label">' + tr('variety') + '</label>';
-  html += '<input class="form-input" id="sessVariety" value="' + escapeHtml(s.variety) + '" placeholder="' + escapeHtml(tr('varietyPlaceholder')) + '">';
+  html += '<label class="form-label" for="sessVariety">' + tr('variety') + '</label>';
+  html += '<input class="form-input" id="sessVariety" value="' + escapeHtml(s.variety) + '" placeholder="' + escapeHtml(tr('varietyPlaceholder')) + '" autocomplete="off">';
   if (state.varieties.length > 0) {
     html += '<div class="variety-suggestions">';
     state.varieties.slice(0, 6).forEach(function(v) {
-      html += '<button class="variety-chip" data-variety="' + escapeHtml(v) + '">' + escapeHtml(v) + '</button>';
+      html += '<button class="variety-chip" data-action="variety" data-value="' + escapeHtml(v) + '">' + escapeHtml(v) + '</button>';
     });
     html += '</div>';
   }
   html += '</div>';
 
-  // Container types
   html += '<div class="session-form">';
-  html += '<label class="form-label">' + tr('containerType') + '</label>';
-  if (s.containerTypes.length > 0) {
-    s.containerTypes.forEach(function(t) {
-      var sizeLabel = t.size ? ' · ' + t.size : '';
-      html += '<div class="ctype-row">';
-      html += '<div class="ctype-info">';
-      html += '<div class="ctype-name">' + escapeHtml(t.kind) + ' ' + fmtNum(t.weight) + ' ' + tr('kg') + sizeLabel + '</div>';
-      html += '</div>';
-      html += '<button class="ctype-menu-btn" data-edit-ctype-pre="' + t.id + '">⋮</button>';
-      html += '</div>';
-    });
-  }
-  html += '<button class="add-stream-btn" data-action="addCtypePre">' + tr('addContainerType') + '</button>';
+  html += '<div class="form-label">' + tr('containers') + '</div>';
+  s.containerTypes.forEach(function(t) {
+    html += '<div class="ctype-row">';
+    html += '<div class="ctype-info"><div class="ctype-name">' + escapeHtml(ctypeLabel(t)) + '</div></div>';
+    html += '<button class="icon-btn ctype-menu-btn" data-action="edit-ctype" data-id="' + t.id + '" aria-label="' + escapeHtml(tr('edit') + ' ' + ctypeLabel(t)) + '">⋮</button>';
+    html += '</div>';
+  });
+  html += '<button class="add-stream-btn" data-action="add-ctype">' + tr('addContainerType') + '</button>';
   html += '</div>';
 
-  // Preparations selection
   html += '<div class="session-form">';
-  html += '<label class="form-label">' + tr('selectPrepsForSession') + '</label>';
+  html += '<div class="form-label">' + tr('selectPrepsForSession') + '</div>';
   html += '<div class="prep-select-list">';
   state.preparations.forEach(function(p) {
-    var sel = s.activePrepIds.indexOf(p.id) !== -1;
-    html += '<div class="prep-select-row ' + (sel ? 'selected' : '') + '" data-toggle-prep="' + p.id + '">';
-    html += '<div class="pscb"></div>';
-    html += '<div class="prep-select-name">' + escapeHtml(p.name || '—') + '</div>';
-    html += '<div class="prep-select-meta">' + fmtNum(p.norm) + ' ' + tr('mlPerTon') + ' · ' + (p.canVolume || 5) + ' ' + tr('liter') + '</div>';
-    html += '</div>';
+    if (!p.name) return;
+    var sel = s.activePrepIds.some(function(x) { return sameId(x, p.id); });
+    html += '<button class="prep-select-row ' + (sel ? 'selected' : '') + '" role="checkbox" aria-checked="' + (sel ? 'true' : 'false') + '" data-action="toggle-prep" data-id="' + p.id + '">';
+    html += '<span class="pscb" aria-hidden="true"></span>';
+    html += '<span class="prep-select-name">' + escapeHtml(p.name) + '</span>';
+    html += '<span class="prep-select-meta">' + fmtNum(p.norm) + ' ' + tr('mlPerTon') + ' · ' + (p.canVolume || 5) + ' ' + tr('liter') + '</span>';
+    html += '</button>';
   });
   html += '</div>';
   html += '</div>';
 
-  // Start button
   html += '<button class="session-major-btn" data-action="start">' + tr('startSessionBtn') + '</button>';
-
   root.innerHTML = html;
-  attachPreStartHandlers(root);
-}
 
-function attachPreStartHandlers(root) {
-  var s = state.session;
-  if (window._dbg) window._dbg('attachPreStart, hasHandler=' + !!root._hasPreStartHandlers);
-
-  // Avoid attaching listener multiple times on re-render
-  if (root._hasPreStartHandlers) {
-    var varietyInput2 = root.querySelector('#sessVariety');
-    if (varietyInput2 && !varietyInput2._hasInputHandler) {
-      varietyInput2._hasInputHandler = true;
-      varietyInput2.addEventListener('input', function(e) {
-        if (state.session) state.session.variety = e.target.value;
-        saveState();
-      });
-    }
-    return;
-  }
-  root._hasPreStartHandlers = true;
-  if (window._dbg) window._dbg('preStart handlers ATTACHED');
-
-  // Single delegated click handler on root
-  root.addEventListener('click', function(e) {
-    if (window._dbg) window._dbg('preStart click, session=' + (state.session ? 'yes' : 'no') + ', started=' + (state.session && state.session.startedAt ? 'yes' : 'no'));
-    if (!state.session || state.session.startedAt) return;
-    var sess = state.session;
-    var target = e.target;
-
-    if (target.closest('[data-action="discard"]')) {
-      discardDraftSession();
-      return;
-    }
-
-    var varietyChip = target.closest('[data-variety]');
-    if (varietyChip) {
-      sess.variety = varietyChip.getAttribute('data-variety');
-      var vi = root.querySelector('#sessVariety');
-      if (vi) vi.value = sess.variety;
-      saveState();
-      return;
-    }
-
-    var editCtype = target.closest('[data-edit-ctype-pre]');
-    if (editCtype) {
-      if (window._dbg) window._dbg('→ openContainerModal(edit)');
-      openContainerModal(editCtype.getAttribute('data-edit-ctype-pre'));
-      return;
-    }
-
-    if (target.closest('[data-action="addCtypePre"]')) {
-      if (window._dbg) window._dbg('→ openContainerModal(new)');
-      openContainerModal(null);
-      return;
-    }
-
-    var togglePrep = target.closest('[data-toggle-prep]');
-    if (togglePrep) {
-      var pidStr = togglePrep.getAttribute('data-toggle-prep');
-      var pidNum = Number(pidStr);
-      var foundNum = state.preparations.some(function(p) { return p.id === pidNum; });
-      var pid = foundNum ? pidNum : pidStr;
-      var idx = sess.activePrepIds.indexOf(pid);
-      if (idx === -1) idx = sess.activePrepIds.indexOf(String(pid));
-      if (idx === -1) {
-        sess.activePrepIds.push(pid);
-      } else {
-        sess.activePrepIds.splice(idx, 1);
-      }
-      saveState();
-      renderSessionView();
-      return;
-    }
-
-    if (target.closest('[data-action="start"]')) {
-      if (window._dbg) window._dbg('→ startSession');
-      startSession();
-      return;
-    }
+  root.querySelector('#sessVariety').addEventListener('input', function(e) {
+    if (state.session) state.session.variety = e.target.value;
+    saveState();
   });
-
-  var varietyInput = root.querySelector('#sessVariety');
-  if (varietyInput && !varietyInput._hasInputHandler) {
-    varietyInput._hasInputHandler = true;
-    varietyInput.addEventListener('input', function(e) {
-      if (state.session) state.session.variety = e.target.value;
-      saveState();
-    });
-  }
 }
 
-function renderSessionActive(root) {
-  var s = state.session;
+function ctypeMetaText(s, t) {
+  var cnt = Calc.containerCount(s, t.id);
+  var corr = Calc.containerCorrectionKg(s, t.id);
+  var text = cnt + ' ' + tr('pcs') + ' · ' + fmtNum(Calc.typeTotalKg(s, t)) + ' ' + tr('kg');
+  if (corr) text += ' (' + tr('correction').toLowerCase() + ' ' + fmtSigned(corr) + ')';
+  return text;
+}
+
+function prepActualText(s, pid, prep) {
+  var canCount = Calc.canisterCount(s, pid);
+  var corr = Calc.canisterCorrectionL(s, pid);
+  if (canCount === 0 && !corr) return { text: tr('fact') + ': —', dimmed: true };
+  var liters = Calc.prepLiters(s, pid, prep.canVolume);
+  var actual = Calc.actualMlPerTon(liters, Calc.sessionTotalKg(s));
+  if (actual === null) return { text: tr('fact') + ': —', dimmed: true };
+  var dev = Calc.deviationPct(actual, prep.norm);
+  var devStr = dev !== null ? ' (' + fmtSigned(dev, 1) + '%)' : '';
+  return { text: tr('fact') + ': ' + fmtNum(actual, 1) + ' ' + tr('mlPerTon') + devStr, dimmed: false };
+}
+
+function renderSessionActive(root, s) {
   var html = '';
+  html += sessionHeader('<button class="session-back" data-action="back">' + tr('backBtn') + '</button>', tr('sessionNumber') + s.number);
+  html += '<div class="session-subtitle">' + escapeHtml(s.variety || '—') + '</div>';
 
-  // Header
-  html += '<div class="session-header">';
-  html += '<button class="session-back" data-action="back">' + tr('backBtn') + '</button>';
-  html += '<div class="session-title">' + tr('sessionNumber') + s.number + '</div>';
-  html += '<span style="width:60px;"></span>';
-  html += '</div>';
-
-  // Subtitle
-  html += '<div style="text-align:center;color:var(--text-dim);font-size:13px;margin-bottom:14px;">';
-  html += escapeHtml(s.variety || '—');
-  html += '</div>';
-
-  // Timer block
   html += '<div class="session-timer-block ' + (s.paused ? 'paused' : '') + '">';
-  html += '<div class="session-timer ' + (s.paused ? 'paused-text' : '') + '" id="sessionTimer">' + fmtElapsedHMS(sessionElapsedMs()) + '</div>';
-  if (s.paused) {
-    html += '<div class="session-paused-label">' + tr('paused') + '</div>';
-  }
-  html += '<div class="session-tonnage">' + tr('totalTonnage') + ': <strong id="sessionTonnage">' + fmtNum(sessionTotalKg()) + '</strong> ' + tr('kg') + '</div>';
-  html += '<button class="session-pause-btn" data-action="' + (s.paused ? 'resume' : 'pause') + '">';
-  html += s.paused ? '▶ ' + tr('resumeBtn') : '⏸ ' + tr('pauseBtn');
-  html += '</button>';
+  html += '<div class="session-timer ' + (s.paused ? 'paused-text' : '') + '" id="sessionTimer">' + fmtTime(sessionElapsedMs(s)) + '</div>';
+  if (s.paused) html += '<div class="session-paused-label">' + tr('paused') + '</div>';
+  html += '<div class="session-tonnage">' + tr('totalTonnage') + ': <strong id="sessionTonnage">' + fmtNum(Calc.sessionTotalKg(s)) + '</strong> ' + tr('kg') + '</div>';
+  html += '<button class="session-pause-btn" data-action="' + (s.paused ? 'resume' : 'pause') + '">' + (s.paused ? '▶ ' + tr('resumeBtn') : '⏸ ' + tr('pauseBtn')) + '</button>';
   html += '</div>';
 
-  // Container types
-  html += '<h2>' + tr('containerType') + '</h2>';
+  html += '<h2>' + tr('containers') + '</h2>';
   s.containerTypes.forEach(function(t) {
-    var cnt = containerCount(t.id);
-    var kg = cnt * t.weight;
-
-    html += '<div class="ctype-row" data-ctype-id="' + t.id + '">';
+    var cnt = Calc.containerCount(s, t.id);
+    html += '<div class="ctype-card" data-ctype-id="' + t.id + '">';
+    html += '<div class="ctype-card-head">';
     html += '<div class="ctype-info">';
-    if (t.size) {
-      html += '<div class="ctype-size">' + escapeHtml(t.size) + '</div>';
-    }
+    if (t.size) html += '<div class="ctype-size">' + escapeHtml(t.size) + '</div>';
     html += '<div class="ctype-name">' + escapeHtml(t.kind) + ' ' + fmtNum(t.weight) + ' ' + tr('kg') + '</div>';
-    html += '<div class="ctype-meta">' + cnt + ' ' + tr('pcs') + ' · ' + fmtNum(kg) + ' ' + tr('kg') + '</div>';
     html += '</div>';
-    html += '<div class="ctype-count">' + cnt + '</div>';
-    html += '<button class="ctype-add-btn" data-add-ctype="' + t.id + '" ' + (s.paused ? 'disabled' : '') + '>+1</button>';
-    html += '<button class="ctype-menu-btn" data-edit-ctype="' + t.id + '">⋮</button>';
+    html += '<button class="icon-btn ctype-menu-btn" data-action="edit-ctype" data-id="' + t.id + '" aria-label="' + escapeHtml(tr('edit') + ' ' + ctypeLabel(t)) + '">⋮</button>';
+    html += '</div>';
+    html += '<div class="ctype-card-row">';
+    html += '<div class="ctype-meta">' + ctypeMetaText(s, t) + '</div>';
+    html += '<div class="count-actions">';
+    html += '<button class="count-undo-btn" data-action="undo-container" data-id="' + t.id + '" ' + (s.paused || cnt === 0 ? 'disabled' : '') + ' aria-label="' + escapeHtml(tr('minusOne') + ' ' + ctypeLabel(t)) + '">' + tr('minusOne') + '</button>';
+    html += '<div class="ctype-count" aria-live="polite">' + cnt + '</div>';
+    html += '<button class="ctype-add-btn" data-action="add-container" data-id="' + t.id + '" ' + (s.paused ? 'disabled' : '') + ' aria-label="' + escapeHtml(tr('plusOne') + ' ' + ctypeLabel(t)) + '">' + tr('plusOne') + '</button>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+  });
+  html += '<button class="add-stream-btn" data-action="add-ctype" style="margin-bottom:18px;">' + tr('addContainerType') + '</button>';
+
+  html += '<h2>' + tr('preparations') + '</h2>';
+  s.activePrepIds.forEach(function(pid) {
+    var p = sessionPrep(s, pid);
+    if (!p) return;
+    var canVol = Calc.sessionCanVolume(s, pid, p.canVolume);
+    var liters = Calc.prepLiters(s, pid, p.canVolume);
+    var canCount = Calc.canisterCount(s, pid);
+    var actual = prepActualText(s, pid, p);
+    html += '<div class="session-prep-card" data-prep-card-id="' + pid + '">';
+    html += '<div class="session-prep-head">';
+    html += '<div class="session-prep-name">' + escapeHtml(p.name) + '</div>';
+    html += '<div class="session-prep-head-right">';
+    html += '<div class="session-prep-volume">' + fmtLiters(liters) + ' ' + tr('liter') + '</div>';
+    html += '<button class="icon-btn ctype-menu-btn" data-action="edit-prep" data-id="' + pid + '" aria-label="' + escapeHtml(tr('edit') + ' ' + p.name) + '">⋮</button>';
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="session-prep-actual ' + (actual.dimmed ? 'dimmed' : '') + '">' + actual.text + '</div>';
+    html += '<div class="session-prep-row">';
+    html += '<div class="session-prep-meta">' + canCount + ' × ' + canVol + ' ' + tr('liter') + '</div>';
+    html += '<div class="count-actions">';
+    html += '<button class="count-undo-btn" data-action="undo-canister" data-id="' + pid + '" ' + (s.paused || canCount === 0 ? 'disabled' : '') + ' aria-label="' + escapeHtml(tr('minusOne') + ' ' + p.name) + '">' + tr('minusOne') + '</button>';
+    html += '<button class="ctype-add-btn" data-action="add-canister" data-id="' + pid + '" ' + (s.paused ? 'disabled' : '') + ' aria-label="' + escapeHtml(tr('plusOne') + ' ' + p.name) + '">' + tr('plusOne') + '</button>';
+    html += '</div>';
+    html += '</div>';
     html += '</div>';
   });
 
-  html += '<button class="add-stream-btn" data-action="addCtypeNew" style="margin-bottom:18px;">' + tr('addContainerType') + '</button>';
-
-  // Preparations
-  html += '<h2>' + tr('preparations') + '</h2>';
-  if (s.activePrepIds.length > 0) {
-    s.activePrepIds.forEach(function(pid) {
-      var p = findPrep(pid);
-      if (!p) return;
-      var canVol = s.canVolumes[pid] || p.canVolume || 5;
-      var liters = sessionPrepLiters(pid);
-      var totalKg = sessionTotalKg();
-      var actualMlPerTon = totalKg > 0 ? (liters * 1000 / (totalKg / 1000)) : null;
-      var deviation = (actualMlPerTon !== null && p.norm > 0) ? (actualMlPerTon - p.norm) / p.norm * 100 : null;
-      var canCount = canisterCount(pid);
-
-      html += '<div class="session-prep-card" data-prep-card-id="' + pid + '">';
-      html += '<div class="session-prep-head">';
-      html += '<div class="session-prep-name">' + escapeHtml(p.name) + '</div>';
-      html += '<div style="display:flex;align-items:baseline;gap:8px;">';
-      html += '<div class="session-prep-volume">' + fmtNum(liters, liters % 1 ? 1 : 0) + ' ' + tr('liter') + '</div>';
-      html += '<button class="ctype-menu-btn" data-edit-prep="' + pid + '" style="margin-right:0;">⋮</button>';
-      html += '</div>';
-      html += '</div>';
-      if (actualMlPerTon !== null) {
-        var devStr = deviation !== null ? ' (' + (deviation > 0 ? '+' : '') + fmtNum(deviation, 1) + '%)' : '';
-        html += '<div class="session-prep-actual">' + tr('fact') + ': ' + fmtNum(actualMlPerTon, 1) + ' ' + tr('mlPerTon') + devStr + '</div>';
-      } else {
-        html += '<div class="session-prep-actual dimmed">' + tr('fact') + ': —</div>';
-      }
-      html += '<div class="session-prep-row">';
-      html += '<div class="session-prep-meta">' + canCount + ' × ' + canVol + ' ' + tr('liter') + '</div>';
-      html += '<button class="ctype-add-btn" data-add-canister="' + pid + '" ' + (s.paused ? 'disabled' : '') + '>+1</button>';
-      html += '</div>';
-      html += '</div>';
-    });
-  }
-
-  // Add prep during session
   var inactivePreps = state.preparations.filter(function(p) {
-    return s.activePrepIds.indexOf(p.id) === -1;
+    return p.name && !s.activePrepIds.some(function(x) { return sameId(x, p.id); });
   });
   if (inactivePreps.length > 0) {
-    html += '<button class="add-stream-btn" data-action="showAddPrep" style="margin-bottom:18px;">' + tr('addPrep') + '</button>';
-    html += '<div id="inSessionAddPrep" class="hidden" style="margin-bottom:18px;">';
-    html += '<div class="add-ctype-form">';
-    html += '<div class="prep-select-list">';
+    html += '<button class="add-stream-btn" data-action="show-add-prep" aria-expanded="' + (state.ui.addPrepOpen ? 'true' : 'false') + '" style="margin-bottom:18px;">' + tr('addPrep') + '</button>';
+    html += '<div id="inSessionAddPrep" class="' + (state.ui.addPrepOpen ? '' : 'hidden') + '" style="margin-bottom:18px;">';
+    html += '<div class="add-ctype-form"><div class="prep-select-list">';
     inactivePreps.forEach(function(p) {
-      html += '<div class="prep-select-row" data-add-prep="' + p.id + '">';
-      html += '<div class="pscb"></div>';
-      html += '<div class="prep-select-name">' + escapeHtml(p.name) + '</div>';
-      html += '<div class="prep-select-meta">' + fmtNum(p.norm) + ' ' + tr('mlPerTon') + ' · ' + (p.canVolume || 5) + ' ' + tr('liter') + '</div>';
-      html += '</div>';
+      html += '<button class="prep-select-row" data-action="add-prep" data-id="' + p.id + '">';
+      html += '<span class="pscb" aria-hidden="true"></span>';
+      html += '<span class="prep-select-name">' + escapeHtml(p.name) + '</span>';
+      html += '<span class="prep-select-meta">' + fmtNum(p.norm) + ' ' + tr('mlPerTon') + ' · ' + (p.canVolume || 5) + ' ' + tr('liter') + '</span>';
+      html += '</button>';
     });
-    html += '</div>';
-    html += '</div>';
-    html += '</div>';
+    html += '</div></div></div>';
   }
 
-  // Log
   html += '<div class="session-log">';
-  html += '<button class="log-toggle" data-action="toggleLog"><span>' + tr('log') + ' (' + s.events.length + ')</span><span id="logChevron">⌄</span></button>';
-  html += '<div id="logList" class="hidden"></div>';
+  html += '<button class="log-toggle" data-action="toggle-log" aria-expanded="' + (state.ui.logOpen ? 'true' : 'false') + '"><span>' + tr('log') + ' (<span id="logCount">' + s.events.length + '</span>)</span><span id="logChevron" aria-hidden="true">' + (state.ui.logOpen ? '⌃' : '⌄') + '</span></button>';
+  html += '<div id="logList" class="' + (state.ui.logOpen ? 'log-list' : 'hidden') + '"></div>';
   html += '</div>';
 
-  // Bottom controls: end + delete
   html += '<div class="session-controls">';
-  html += '<button class="session-major-btn danger confirm-btn" data-action="end" style="margin-top:0;">' + tr('endSessionBtn') + '</button>';
-  html += '<button class="session-delete-btn confirm-btn" data-action="deleteSession">' + tr('deleteSession') + '</button>';
+  html += '<button class="session-major-btn danger confirm-btn" data-action="end" data-confirm="1">' + tr('endSessionBtn') + '</button>';
+  html += '<button class="session-delete-btn confirm-btn" data-action="delete-session" data-confirm="1">' + tr('deleteSession') + '</button>';
   html += '</div>';
 
   root.innerHTML = html;
-  attachActiveHandlers(root);
-  bindConfirmButtonsActive(root);
+  if (state.ui.logOpen) renderLogList(root.querySelector('#logList'), s);
 }
 
-function attachActiveHandlers(root) {
-  // Avoid duplicate listeners on re-render
-  if (root._hasActiveHandlers) return;
-  root._hasActiveHandlers = true;
-
-  root.addEventListener('click', function(e) {
-    if (!state.session || !state.session.startedAt || state.session.endedAt) return;
-    var s = state.session;
-    var target = e.target;
-
-    if (target.closest('[data-action="back"]')) { exitSessionView(); return; }
-    if (target.closest('[data-action="pause"]')) { pauseSession(); return; }
-    if (target.closest('[data-action="resume"]')) { resumeSession(); return; }
-
-    var addCtBtn = target.closest('[data-add-ctype]');
-    if (addCtBtn) {
-      addContainerEvent(addCtBtn.getAttribute('data-add-ctype'));
-      return;
-    }
-
-    var addCanBtn = target.closest('[data-add-canister]');
-    if (addCanBtn) {
-      var pid = addCanBtn.getAttribute('data-add-canister');
-      var pidNum = Number(pid);
-      var found = state.preparations.some(function(p) { return p.id === pidNum; });
-      addCanisterEvent(found ? pidNum : pid);
-      return;
-    }
-
-    var editCtBtn = target.closest('[data-edit-ctype]');
-    if (editCtBtn) {
-      openContainerModal(editCtBtn.getAttribute('data-edit-ctype'));
-      return;
-    }
-
-    var editPrBtn = target.closest('[data-edit-prep]');
-    if (editPrBtn) {
-      var ppid = editPrBtn.getAttribute('data-edit-prep');
-      var ppidNum = Number(ppid);
-      var foundP = state.preparations.some(function(p) { return p.id === ppidNum; });
-      openPrepModal(foundP ? ppidNum : ppid);
-      return;
-    }
-
-    if (target.closest('[data-action="addCtypeNew"]')) {
-      openContainerModal(null);
-      return;
-    }
-
-    if (target.closest('[data-action="showAddPrep"]')) {
-      var box = root.querySelector('#inSessionAddPrep');
-      if (box) box.classList.toggle('hidden');
-      return;
-    }
-
-    var addPrBtn = target.closest('[data-add-prep]');
-    if (addPrBtn) {
-      var apid = addPrBtn.getAttribute('data-add-prep');
-      var apidNum = Number(apid);
-      var foundAP = state.preparations.some(function(p) { return p.id === apidNum; });
-      addPrepToSession(foundAP ? apidNum : apid);
-      return;
-    }
-
-    if (target.closest('[data-action="toggleLog"]')) {
-      var list = root.querySelector('#logList');
-      var chev = root.querySelector('#logChevron');
-      if (!list) return;
-      var hidden = list.classList.contains('hidden');
-      if (hidden) {
-        renderLogList(list);
-        list.classList.remove('hidden');
-        list.classList.add('log-list');
-        if (chev) chev.textContent = '⌃';
-      } else {
-        list.classList.add('hidden');
-        list.classList.remove('log-list');
-        if (chev) chev.textContent = '⌄';
-      }
-      return;
-    }
-
-    var rmEvBtn = target.closest('[data-remove-event]');
-    if (rmEvBtn) {
-      removeEvent(rmEvBtn.getAttribute('data-remove-event'));
-      return;
-    }
-  });
-
-  // Two-stage confirm buttons need direct binding (they have local state)
-  // We'll re-bind them after each render via a separate function
-  bindConfirmButtonsActive(root);
-}
-
-function bindConfirmButtonsActive(root) {
-  var endBtn = root.querySelector('[data-action="end"]');
-  if (endBtn && !endBtn._armed) {
-    endBtn._armed = true;
-    armConfirmButton(endBtn, endSession);
-  }
-  var delSessBtn = root.querySelector('[data-action="deleteSession"]');
-  if (delSessBtn && !delSessBtn._armed) {
-    delSessBtn._armed = true;
-    armConfirmButton(delSessBtn, deleteCurrentSession);
-  }
-}
-
-// Two-stage confirm helper. First tap arms the button (visual change + countdown).
-// Second tap within ARM_WINDOW_MS executes the action. Otherwise auto-resets.
-var ARM_WINDOW_MS = 3000;
-function armConfirmButton(btn, action) {
-  var armed = false;
-  var timer = null;
-  var originalText = btn.textContent;
-
-  function disarm() {
-    armed = false;
-    btn.classList.remove('armed');
-    btn.textContent = originalText;
-    if (timer) { clearTimeout(timer); timer = null; }
-  }
-
-  btn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    if (!armed) {
-      armed = true;
-      btn.classList.add('armed');
-      btn.textContent = '↻ ' + tr('confirmDouble');
-      vibrate(40);
-      timer = setTimeout(disarm, ARM_WINDOW_MS);
-    } else {
-      disarm();
-      action();
-    }
-  });
-}
-
-function renderLogList(container) {
+// Оновити лише цифри активної сесії — без перебудови DOM (журнал і форми не згортаються).
+function refreshSessionNumbers() {
   var s = state.session;
-  if (!s.events || s.events.length === 0) {
+  if (!s || !s.startedAt || s.endedAt || state.view !== 'session' || state.viewingSessionId) return;
+  var root = $('sessionView');
+  var tEl = $('sessionTonnage');
+  if (tEl) tEl.textContent = fmtNum(Calc.sessionTotalKg(s));
+
+  s.containerTypes.forEach(function(t) {
+    var card = root.querySelector('[data-ctype-id="' + t.id + '"]');
+    if (!card) return;
+    var cnt = Calc.containerCount(s, t.id);
+    card.querySelector('.ctype-count').textContent = cnt;
+    card.querySelector('.ctype-meta').textContent = ctypeMetaText(s, t);
+    card.querySelector('[data-action="undo-container"]').disabled = s.paused || cnt === 0;
+  });
+
+  s.activePrepIds.forEach(function(pid) {
+    var card = root.querySelector('[data-prep-card-id="' + pid + '"]');
+    var p = sessionPrep(s, pid);
+    if (!card || !p) return;
+    var canCount = Calc.canisterCount(s, pid);
+    var actual = prepActualText(s, pid, p);
+    card.querySelector('.session-prep-volume').textContent = fmtLiters(Calc.prepLiters(s, pid, p.canVolume)) + ' ' + tr('liter');
+    var actEl = card.querySelector('.session-prep-actual');
+    actEl.textContent = actual.text;
+    actEl.classList.toggle('dimmed', actual.dimmed);
+    card.querySelector('.session-prep-meta').textContent = canCount + ' × ' + Calc.sessionCanVolume(s, pid, p.canVolume) + ' ' + tr('liter');
+    card.querySelector('[data-action="undo-canister"]').disabled = s.paused || canCount === 0;
+  });
+
+  var lc = $('logCount');
+  if (lc) lc.textContent = s.events.length;
+  if (state.ui.logOpen) renderLogList(root.querySelector('#logList'), s);
+}
+
+function eventDescription(s, e) {
+  if (e.type === 'container') {
+    var t = s.containerTypes.find(function(x) { return x.id === e.refId; });
+    return t ? '+1 ' + ctypeLabel(t) : '+1 ?';
+  }
+  if (e.type === 'container_corr') {
+    var ct = s.containerTypes.find(function(x) { return x.id === e.refId; });
+    var dKg = Number(e.deltaKg) || 0;
+    return fmtSigned(dKg) + ' ' + tr('kg') + ' ' + (ct ? ctypeLabel(ct) : '?') + ' (' + tr('correction').toLowerCase() + ')';
+  }
+  if (e.type === 'canister') {
+    var p = sessionPrep(s, e.refId);
+    return '+' + Calc.sessionCanVolume(s, e.refId, p ? p.canVolume : 5) + ' ' + tr('liter') + ' ' + (p ? p.name : '?');
+  }
+  if (e.type === 'canister_corr') {
+    var pp = sessionPrep(s, e.refId);
+    var dL = Number(e.deltaL) || 0;
+    return (dL > 0 ? '+' : '') + fmtLiters(dL) + ' ' + tr('liter') + ' ' + (pp ? pp.name : '?') + ' (' + tr('correction').toLowerCase() + ')';
+  }
+  return '?';
+}
+
+function renderLogList(container, s) {
+  if (!container) return;
+  if (!s.events.length) {
     container.innerHTML = '<div class="log-empty">—</div>';
     return;
   }
-  var sorted = s.events.slice().sort(function(a, b) { return b.ts - a.ts; });
+  // найновіші згори; при однаковому часі — пізніше додані
+  var sorted = s.events.map(function(e, i) { return { e: e, i: i }; })
+    .sort(function(a, b) { return (b.e.ts - a.e.ts) || (b.i - a.i); })
+    .map(function(x) { return x.e; });
   var html = '';
   sorted.forEach(function(e) {
-    var desc = '';
-    if (e.type === 'container') {
-      var t = s.containerTypes.find(function(x) { return x.id === e.refId; });
-      if (t) {
-        var sz = t.size ? ' ' + t.size : '';
-        desc = '+1 ' + (t.kind || '') + ' ' + fmtNum(t.weight) + sz;
-      } else {
-        desc = '+1 ' + tr('kg');
-      }
-    } else if (e.type === 'container_corr') {
-      var ct = s.containerTypes.find(function(x) { return x.id === e.refId; });
-      var dKg = e.deltaKg != null ? e.deltaKg : (e.delta || 0);
-      var sgn = dKg > 0 ? '+' : '';
-      var nm = ct ? (ct.kind + ' ' + fmtNum(ct.weight) + (ct.size ? ' ' + ct.size : '')) : '?';
-      desc = sgn + fmtNum(dKg) + ' ' + tr('kg') + ' ' + nm + ' (' + tr('correction').toLowerCase() + ')';
-    } else if (e.type === 'canister') {
-      var p = findPrep(e.refId);
-      var v = s.canVolumes[e.refId] || (p ? p.canVolume : 5);
-      desc = '+' + v + ' ' + tr('liter') + ' ' + (p ? p.name : '?');
-    } else if (e.type === 'canister_corr') {
-      var pp = findPrep(e.refId);
-      var dL = e.deltaL != null ? e.deltaL : (e.delta || 0);
-      var sgn2 = dL > 0 ? '+' : '';
-      desc = sgn2 + fmtNum(dL, dL % 1 ? 1 : 0) + ' ' + tr('liter') + ' ' + (pp ? pp.name : '?') + ' (' + tr('correction').toLowerCase() + ')';
-    }
     html += '<div class="log-item">';
     html += '<div class="log-time">' + fmtClock(e.ts) + '</div>';
-    html += '<div class="log-desc">' + escapeHtml(desc) + '</div>';
-    html += '<button class="log-remove" data-remove-event="' + e.id + '">✕</button>';
+    html += '<div class="log-desc">' + escapeHtml(eventDescription(s, e)) + '</div>';
+    html += '<button class="icon-btn log-remove" data-action="remove-event" data-id="' + e.id + '" aria-label="' + escapeHtml(tr('ariaRemoveEvent')) + '">✕</button>';
     html += '</div>';
   });
   container.innerHTML = html;
-  container.querySelectorAll('[data-remove-event]').forEach(function(el) {
-    el.addEventListener('click', function() {
-      removeEvent(el.getAttribute('data-remove-event'));
-    });
-  });
 }
 
-function renderSessionCompleted(root) {
-  var s = state.session;
+function sessionSummary(s) {
+  var totalMs = Calc.sessionElapsedMs(s, Date.now());
+  var totalKg = Calc.sessionTotalKg(s);
+  return {
+    totalMs: totalMs,
+    totalKg: totalKg,
+    containers: Calc.sessionContainers(s),
+    avgSpeed: Calc.avgSpeedKgPerMin(totalKg, totalMs),
+    types: s.containerTypes.map(function(t) {
+      return { type: t, count: Calc.containerCount(s, t.id), corr: Calc.containerCorrectionKg(s, t.id), total: Calc.typeTotalKg(s, t) };
+    }),
+    preps: s.activePrepIds.map(function(pid) {
+      var p = sessionPrep(s, pid);
+      if (!p) return null;
+      var liters = Calc.prepLiters(s, pid, p.canVolume);
+      var actual = Calc.actualMlPerTon(liters, totalKg);
+      return { prep: p, liters: liters, actual: actual, dev: Calc.deviationPct(actual, p.norm) };
+    }).filter(Boolean)
+  };
+}
+
+function typeFormula(row) {
+  var f = row.count + ' × ' + fmtNum(row.type.weight);
+  if (row.corr) f += ' ' + (row.corr > 0 ? '+' : '−') + ' ' + fmtNum(Math.abs(row.corr));
+  return f + ' = ' + fmtNum(row.total) + ' ' + tr('kg');
+}
+
+function renderSessionCompleted(root, s, viewing) {
+  var sum = sessionSummary(s);
   var html = '';
-
-  html += '<div class="session-header">';
-  html += '<span style="width:60px;"></span>';
-  html += '<div class="session-title">' + tr('sessionCompleted') + '</div>';
-  html += '<span style="width:60px;"></span>';
-  html += '</div>';
-
-  var totalMs = sessionElapsedMs();
-  var totalKg = sessionTotalKg();
-  var totalContainers = state.session.events.filter(function(e) { return e.type === 'container'; }).length;
-  var avgSpeed = totalMs > 0 ? totalKg / (totalMs / 60000) : 0;
+  var left = viewing ? '<button class="session-back" data-action="back-history">' + tr('backBtn') + '</button>' : '<span class="session-header-spacer"></span>';
+  html += sessionHeader(left, viewing ? tr('sessionNumber') + s.number : tr('sessionCompleted'));
 
   html += '<div class="summary-card">';
   html += '<div class="summary-title">' + tr('sessionNumber') + s.number + '</div>';
   html += '<div class="summary-subtitle">' + escapeHtml(s.variety || '—') + ' · ' + fmtDate(s.startedAt) + '</div>';
+  html += summaryRow(tr('duration'), fmtTime(sum.totalMs));
+  html += summaryRow(tr('containersCount'), sum.containers + ' ' + tr('pcs'));
+  html += summaryRow(tr('totalTonnage'), fmtNum(sum.totalKg) + ' ' + tr('kg'), 'highlight');
+  html += summaryRow(tr('avgSpeed'), sum.avgSpeed > 0 ? fmtNum(sum.avgSpeed, 0) + ' ' + tr('kgPerMin') : '—');
 
-  html += '<div class="summary-row">';
-  html += '<div class="summary-key">' + tr('duration') + '</div>';
-  html += '<div class="summary-val">' + fmtElapsedHMS(totalMs) + '</div>';
-  html += '</div>';
-
-  html += '<div class="summary-row">';
-  html += '<div class="summary-key">' + tr('containers') + '</div>';
-  html += '<div class="summary-val">' + totalContainers + ' ' + tr('pcs') + '</div>';
-  html += '</div>';
-
-  html += '<div class="summary-row">';
-  html += '<div class="summary-key">' + tr('totalTonnage') + '</div>';
-  html += '<div class="summary-val highlight">' + fmtNum(totalKg) + ' ' + tr('kg') + '</div>';
-  html += '</div>';
-
-  html += '<div class="summary-row">';
-  html += '<div class="summary-key">' + tr('avgSpeed') + '</div>';
-  html += '<div class="summary-val">' + (avgSpeed > 0 ? fmtNum(avgSpeed, 0) + ' ' + tr('kgPerMin') : '—') + '</div>';
-  html += '</div>';
-
-  // Per-container breakdown
-  if (s.containerTypes.length > 1) {
-    html += '<div class="summary-section">';
-    html += '<div class="summary-section-label">' + tr('containerType') + '</div>';
-    s.containerTypes.forEach(function(t) {
-      var cnt = containerCount(t.id, s);
-      var sz = t.size ? ' ' + t.size : '';
-      var lbl = t.kind + ' ' + fmtNum(t.weight) + ' ' + tr('kg') + sz;
-      html += '<div class="summary-row">';
-      html += '<div class="summary-key">' + escapeHtml(lbl) + '</div>';
-      html += '<div class="summary-val">' + cnt + ' × = ' + fmtNum(cnt * t.weight) + ' ' + tr('kg') + '</div>';
-      html += '</div>';
+  if (sum.types.length > 0) {
+    html += '<div class="summary-section"><div class="summary-section-label">' + tr('containers') + '</div>';
+    sum.types.forEach(function(row) {
+      html += summaryRow(escapeHtml(ctypeLabel(row.type)), typeFormula(row));
     });
     html += '</div>';
   }
 
-  // Preparations
-  if (s.activePrepIds.length > 0) {
-    html += '<div class="summary-section">';
-    html += '<div class="summary-section-label">' + tr('preparations') + '</div>';
-    s.activePrepIds.forEach(function(pid) {
-      var p = findPrep(pid);
-      if (!p) return;
-      var liters = sessionPrepLiters(pid);
-      var actualNorm = totalKg > 0 ? (liters * 1000 / (totalKg / 1000)) : null;
-      var devStr = '';
-      if (actualNorm !== null && p.norm > 0) {
-        var dev = (actualNorm - p.norm) / p.norm * 100;
-        devStr = ' (' + (dev > 0 ? '+' : '') + fmtNum(dev, 1) + '%)';
-      }
-      html += '<div class="summary-row">';
-      html += '<div class="summary-key">' + escapeHtml(p.name) + '</div>';
-      html += '<div class="summary-val">' + fmtNum(liters, liters % 1 ? 1 : 0) + ' ' + tr('liter') + '</div>';
-      html += '</div>';
-      if (actualNorm !== null) {
-        html += '<div class="summary-row">';
-        html += '<div class="summary-key" style="padding-left:12px;">' + tr('fact') + '</div>';
-        html += '<div class="summary-val" style="font-size:13px;color:var(--teal);">' + fmtNum(actualNorm, 1) + ' ' + tr('mlPerTon') + devStr + '</div>';
-        html += '</div>';
+  if (sum.preps.length > 0) {
+    html += '<div class="summary-section"><div class="summary-section-label">' + tr('preparations') + '</div>';
+    sum.preps.forEach(function(row) {
+      html += summaryRow(escapeHtml(row.prep.name), fmtLiters(row.liters) + ' ' + tr('liter'));
+      if (row.actual !== null) {
+        var devStr = row.dev !== null ? ' (' + fmtSigned(row.dev, 1) + '%)' : '';
+        html += '<div class="summary-row summary-row-sub"><div class="summary-key">' + tr('fact') + '</div>';
+        html += '<div class="summary-val summary-val-fact">' + fmtNum(row.actual, 1) + ' ' + tr('mlPerTon') + devStr + '</div></div>';
       }
     });
     html += '</div>';
   }
-
   html += '</div>';
 
-  html += '<button class="session-major-btn" data-action="archive">' + tr('closeBtn') + '</button>';
-
+  html += '<div class="summary-actions">';
+  html += '<button class="btn btn-secondary" data-action="share">↗ ' + tr('share') + '</button>';
+  if (!viewing) html += '<button class="session-major-btn" data-action="archive" style="margin-top:0;">' + tr('closeBtn') + '</button>';
+  html += '</div>';
   root.innerHTML = html;
-
-  root.querySelector('[data-action="archive"]').addEventListener('click', archiveSession);
 }
 
-// ── MODALS ──────────────────────────────────────────────────────────────────
-
-function closeModalDom() {
-  var existing = document.getElementById('modalRoot');
-  if (existing) existing.parentNode.removeChild(existing);
+function summaryRow(key, val, cls) {
+  return '<div class="summary-row"><div class="summary-key">' + key + '</div><div class="summary-val ' + (cls || '') + '">' + val + '</div></div>';
 }
+
+function summaryText(s) {
+  var sum = sessionSummary(s);
+  var lines = [];
+  lines.push(tr('title') + ' — ' + tr('sessionNumber') + s.number + ' · ' + (s.variety || '—') + ' · ' + fmtDate(s.startedAt));
+  lines.push(tr('duration') + ': ' + fmtTime(sum.totalMs));
+  lines.push(tr('containersCount') + ': ' + sum.containers + ' ' + tr('pcs') + ' · ' + tr('totalTonnage').toLowerCase() + ': ' + fmtNum(sum.totalKg) + ' ' + tr('kg'));
+  lines.push(tr('avgSpeed') + ': ' + (sum.avgSpeed > 0 ? fmtNum(sum.avgSpeed, 0) + ' ' + tr('kgPerMin') : '—'));
+  if (sum.types.length) {
+    lines.push(tr('containers') + ':');
+    sum.types.forEach(function(row) { lines.push(' • ' + ctypeLabel(row.type) + ': ' + typeFormula(row)); });
+  }
+  if (sum.preps.length) {
+    lines.push(tr('preparations') + ':');
+    sum.preps.forEach(function(row) {
+      var line = ' • ' + row.prep.name + ': ' + fmtLiters(row.liters) + ' ' + tr('liter');
+      if (row.actual !== null) {
+        line += ' · ' + tr('fact') + ' ' + fmtNum(row.actual, 1) + ' ' + tr('mlPerTon');
+        if (row.dev !== null) line += ' (' + fmtSigned(row.dev, 1) + '%)';
+      }
+      line += ' · ' + tr('norm').toLowerCase() + ' ' + fmtNum(row.prep.norm) + ' ' + tr('mlPerTon');
+      lines.push(line);
+    });
+  }
+  return lines.join('\n');
+}
+
+function shareSession(s) {
+  var text = summaryText(s);
+  var title = tr('title') + ' — ' + tr('sessionNumber') + s.number;
+  if (navigator.share) {
+    navigator.share({ title: title, text: text }).catch(function() {});
+    return;
+  }
+  copyText(text);
+}
+
+function copyText(text) {
+  var done = function() { showToast(tr('copied')); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(function() { copyFallback(text); done(); });
+  } else {
+    copyFallback(text);
+    done();
+  }
+}
+
+function copyFallback(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+
+// Один делегований обробник на весь екран сесії.
+function onSessionViewClick(e) {
+  var btn = e.target.closest('[data-action]');
+  if (!btn || btn.disabled) return;
+  var action = btn.getAttribute('data-action');
+  var id = btn.getAttribute('data-id');
+  var s = state.session;
+
+  if (btn.hasAttribute('data-confirm') && !confirmTap(btn)) return;
+
+  switch (action) {
+    // перегляд з історії / завершена
+    case 'back-history': state.viewingSessionId = null; state.view = 'history'; renderViews(); return;
+    case 'share': { var v = viewedSession(); if (v) shareSession(v); return; }
+    case 'archive': archiveSession(); return;
+  }
+  if (!s || state.viewingSessionId) return;
+
+  if (!s.startedAt) {
+    switch (action) {
+      case 'discard': discardDraftSession(); return;
+      case 'variety': {
+        s.variety = btn.getAttribute('data-value');
+        var vi = $('sessVariety');
+        if (vi) vi.value = s.variety;
+        saveState();
+        return;
+      }
+      case 'edit-ctype': openContainerModal(id); return;
+      case 'add-ctype': openContainerModal(null); return;
+      case 'toggle-prep': {
+        var p = findPrep(id);
+        if (!p) return;
+        var idx = -1;
+        s.activePrepIds.forEach(function(x, i) { if (sameId(x, p.id)) idx = i; });
+        if (idx === -1) s.activePrepIds.push(p.id); else s.activePrepIds.splice(idx, 1);
+        saveState();
+        renderSessionView();
+        return;
+      }
+      case 'start': startSession(); return;
+    }
+    return;
+  }
+
+  if (s.endedAt) return;
+
+  switch (action) {
+    case 'back': exitSessionView(); return;
+    case 'pause': pauseSession(); return;
+    case 'resume': resumeSession(); return;
+    case 'add-container': addContainerEvent(id); return;
+    case 'undo-container': undoLastEvent('container', id); return;
+    case 'add-canister': addCanisterEvent(id); return;
+    case 'undo-canister': undoLastEvent('canister', id); return;
+    case 'edit-ctype': openContainerModal(id); return;
+    case 'edit-prep': openPrepModal(id); return;
+    case 'add-ctype': openContainerModal(null); return;
+    case 'show-add-prep': {
+      state.ui.addPrepOpen = !state.ui.addPrepOpen;
+      var box = $('inSessionAddPrep');
+      if (box) box.classList.toggle('hidden', !state.ui.addPrepOpen);
+      btn.setAttribute('aria-expanded', state.ui.addPrepOpen ? 'true' : 'false');
+      return;
+    }
+    case 'add-prep': addPrepToSession(id); return;
+    case 'toggle-log': {
+      state.ui.logOpen = !state.ui.logOpen;
+      var list = $('logList');
+      var chev = $('logChevron');
+      if (state.ui.logOpen) {
+        renderLogList(list, s);
+        list.className = 'log-list';
+        if (chev) chev.textContent = '⌃';
+      } else {
+        list.className = 'hidden';
+        if (chev) chev.textContent = '⌄';
+      }
+      btn.setAttribute('aria-expanded', state.ui.logOpen ? 'true' : 'false');
+      return;
+    }
+    case 'remove-event': removeEvent(id); return;
+    case 'end': endSession(); return;
+    case 'delete-session': deleteCurrentSession(); return;
+  }
+}
+
+// ── Модальні вікна ──────────────────────────────────────────────────────────
 
 function closeModal() {
-  closeModalDom();
+  closePrompt();
+  var existing = $('modalRoot');
+  if (existing) existing.parentNode.removeChild(existing);
   state.modal = null;
 }
 
-// Simple text prompt modal. Returns via callback.
-function openTextPrompt(title, hint, onSubmit) {
-  state.modal = {
-    kind: 'textPrompt',
-    title: title,
-    hint: hint,
-    onSubmit: onSubmit
-  };
-  renderModal();
+function closePrompt() {
+  var existing = $('promptRoot');
+  if (existing) existing.parentNode.removeChild(existing);
+  state.prompt = null;
 }
 
-function renderTextPromptModal(backdrop) {
-  var m = state.modal;
+function makeBackdrop(id, onBackdropClick) {
+  var backdrop = document.createElement('div');
+  backdrop.id = id;
+  backdrop.className = 'modal-backdrop';
+  backdrop.addEventListener('click', function(e) { if (e.target === backdrop) onBackdropClick(); });
+  return backdrop;
+}
+
+function renderModal() {
+  var existing = $('modalRoot');
+  if (existing) existing.parentNode.removeChild(existing);
+  if (!state.modal) return;
+  var backdrop = makeBackdrop('modalRoot', closeModal);
   var modal = document.createElement('div');
   modal.className = 'modal';
-  var html = '';
-  html += '<div class="modal-header">';
-  html += '<div class="modal-title">' + escapeHtml(m.title) + '</div>';
-  html += '<button class="modal-close" data-action="close">✕</button>';
-  html += '</div>';
-  html += '<div class="modal-section">';
-  html += '<input type="text" class="modal-input" data-role="textInput" placeholder="' + escapeHtml(m.hint || '') + '" autofocus>';
-  html += '</div>';
-  html += '<div class="modal-actions">';
-  html += '<button class="btn btn-secondary" data-action="close">' + tr('cancelBtn') + '</button>';
-  html += '<button class="btn btn-primary" data-action="submit">' + tr('saveBtn') + '</button>';
-  html += '</div>';
-  modal.innerHTML = html;
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  if (state.modal.kind === 'container') renderContainerModal(modal);
+  else if (state.modal.kind === 'prep') renderPrepModal(modal);
+  else if (state.modal.kind === 'confirm') renderConfirmModal(modal);
   backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+}
+
+function modalHeader(title) {
+  return '<div class="modal-header"><div class="modal-title">' + escapeHtml(title) + '</div>'
+    + '<button class="icon-btn modal-close" data-action="close" aria-label="' + escapeHtml(tr('cancelBtn')) + '">✕</button></div>';
+}
+
+// Текстовий запит поверх поточної модалки (не закриває її).
+function openTextPrompt(title, hint, onSubmit) {
+  closePrompt();
+  state.prompt = { title: title, hint: hint, onSubmit: onSubmit };
+  var backdrop = makeBackdrop('promptRoot', closePrompt);
+  backdrop.classList.add('modal-backdrop-top');
+  var modal = document.createElement('div');
+  modal.className = 'modal modal-small';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.innerHTML = modalHeader(title)
+    + '<div class="modal-section"><input type="text" class="modal-input" data-role="textInput" placeholder="' + escapeHtml(hint || '') + '" autocomplete="off"></div>'
+    + '<div class="modal-actions"><button class="btn btn-secondary" data-action="close">' + tr('cancelBtn') + '</button>'
+    + '<button class="btn btn-primary" data-action="submit">' + tr('saveBtn') + '</button></div>';
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
 
   var input = modal.querySelector('[data-role="textInput"]');
-  setTimeout(function() { if (input) input.focus(); }, 50);
-
-  modal.querySelectorAll('[data-action="close"]').forEach(function(el) {
-    el.addEventListener('click', closeModal);
-  });
-  modal.querySelector('[data-action="submit"]').addEventListener('click', function() {
+  setTimeout(function() { input.focus(); }, 50);
+  function submit() {
     var v = input.value.trim();
-    var cb = m.onSubmit;
-    closeModal();
-    if (v && cb) cb(v);
-  });
-  if (input) {
-    input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        var v = input.value.trim();
-        var cb = m.onSubmit;
-        closeModal();
-        if (v && cb) cb(v);
-      }
-    });
+    closePrompt();
+    if (v) onSubmit(v);
   }
+  modal.querySelectorAll('[data-action="close"]').forEach(function(el) { el.addEventListener('click', closePrompt); });
+  modal.querySelector('[data-action="submit"]').addEventListener('click', submit);
+  input.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
 }
 
 function openContainerModal(typeId) {
-  // typeId === null => create mode
+  var s = state.session;
+  if (!s) return;
   var t = null;
   if (typeId) {
-    t = state.session.containerTypes.find(function(x) { return x.id === typeId; });
+    t = s.containerTypes.find(function(x) { return x.id === typeId; });
     if (!t) return;
   }
   state.modal = {
@@ -1862,463 +1941,301 @@ function openContainerModal(typeId) {
     draft: {
       kind: t ? t.kind : (state.containerKinds[0] || 'ящик'),
       size: t ? (t.size || '') : '',
-      weight: t ? t.weight : ''
+      weight: t ? t.weight : '',
+      count: t ? Calc.containerCount(s, t.id) : 0,
+      correction: t ? Calc.containerCorrectionKg(s, t.id) : 0
     }
   };
   renderModal();
+}
+
+function chipRowHtml(items, selected, dataKey, removable, addAction, addLabel) {
+  var html = '<div class="chip-row">';
+  items.forEach(function(v) {
+    html += '<span class="chip-wrap"><button class="chip ' + (selected === v ? 'selected' : '') + '" ' + dataKey + '="' + escapeHtml(v) + '" aria-pressed="' + (selected === v ? 'true' : 'false') + '">' + escapeHtml(v) + '</button>';
+    if (removable) html += '<button class="chip-remove" data-remove-' + removable + '="' + escapeHtml(v) + '" aria-label="' + escapeHtml(tr('ariaRemove') + ' ' + v) + '">×</button>';
+    html += '</span>';
+  });
+  html += '<button class="chip chip-add" data-action="' + addAction + '" aria-label="' + escapeHtml(addLabel) + '">+</button>';
+  html += '</div>';
+  return html;
+}
+
+function counterHtml(value) {
+  return '<div class="counter-row">'
+    + '<button class="counter-btn" data-action="decCount" aria-label="−1">−</button>'
+    + '<input type="number" inputmode="numeric" min="0" class="counter-value" data-role="count" value="' + value + '" aria-label="' + escapeHtml(tr('countUnits')) + '">'
+    + '<button class="counter-btn" data-action="incCount" aria-label="+1">+</button>'
+    + '</div>';
+}
+
+function renderContainerModal(modal) {
+  var m = state.modal;
+  var s = state.session;
+  var isNew = !m.typeId;
+  var t = isNew ? null : s.containerTypes.find(function(x) { return x.id === m.typeId; });
+  var d = m.draft;
+
+  var html = modalHeader(isNew ? tr('addContainerType') : tr('edit'));
+
+  html += '<div class="modal-section"><div class="modal-label">' + tr('size') + '</div>';
+  html += chipRowHtml(state.sizes, d.size, 'data-size', 'size', 'addSize', tr('addSizeTitle'));
+  html += '</div>';
+
+  html += '<div class="modal-section"><div class="modal-label">' + tr('kind') + '</div>';
+  html += chipRowHtml(state.containerKinds, d.kind, 'data-kind', 'kind', 'addKind', tr('addKindTitle'));
+  html += '</div>';
+
+  html += '<div class="modal-section field"><label class="modal-label" for="ctWeight">' + tr('weight') + '</label>';
+  html += '<div class="modal-row"><input id="ctWeight" type="number" inputmode="decimal" min="0" class="modal-input text-right" data-role="weight" value="' + (d.weight === '' ? '' : d.weight) + '" placeholder="' + tr('kg') + '">';
+  html += '<span class="unit-tag">' + tr('kg') + '</span></div>';
+  html += '<div class="chip-row" style="margin-top:8px;">';
+  PRESETS.forEach(function(p) { html += '<button class="chip" data-weight-preset="' + p + '">' + p + '</button>'; });
+  html += '</div></div>';
+
+  if (!isNew) {
+    html += '<div class="modal-section modal-section-sep"><div class="modal-label">' + tr('countUnits') + '</div>' + counterHtml(d.count) + '</div>';
+    html += '<div class="modal-section field"><label class="modal-label" for="ctCorr">' + tr('correctionKg') + '</label>';
+    html += '<div class="modal-row"><input id="ctCorr" type="number" inputmode="numeric" class="modal-input text-right" data-role="correction" value="' + (d.correction || '') + '" placeholder="±N">';
+    html += '<span class="unit-tag">' + tr('kg') + '</span></div>';
+    html += '<div class="modal-hint">' + tr('correctionHintKg') + '</div>';
+    html += '<div class="summary-line" data-role="summary"></div>';
+    html += '</div>';
+  }
+
+  html += '<div class="modal-actions">';
+  html += '<button class="btn btn-secondary" data-action="close">' + tr('cancelBtn') + '</button>';
+  html += '<button class="btn btn-primary" data-action="save">' + tr('saveBtn') + '</button>';
+  html += '</div>';
+  if (!isNew) {
+    html += '<button class="modal-delete-btn confirm-btn" data-action="delete">✕ ' + tr('deleteType') + (d.count > 0 ? ' (' + d.count + ' ' + tr('pcs') + ')' : '') + '</button>';
+  }
+  modal.innerHTML = html;
+
+  var weightInput = modal.querySelector('[data-role="weight"]');
+  var countInput = modal.querySelector('[data-role="count"]');
+  var corrInput = modal.querySelector('[data-role="correction"]');
+  var summaryEl = modal.querySelector('[data-role="summary"]');
+
+  function refreshSummary() {
+    if (!summaryEl) return;
+    var w = Number(d.weight) || 0;
+    var total = d.count * w + (Number(d.correction) || 0);
+    summaryEl.innerHTML = typeFormula({ count: d.count, corr: Number(d.correction) || 0, total: total, type: { weight: w } })
+      .replace(/= (.+)$/, '= <strong>$1</strong>');
+  }
+  refreshSummary();
+
+  modal.querySelectorAll('[data-action="close"]').forEach(function(el) { el.addEventListener('click', closeModal); });
+
+  modal.querySelectorAll('[data-kind]').forEach(function(el) {
+    el.addEventListener('click', function() { d.kind = el.getAttribute('data-kind'); renderModal(); });
+  });
+  modal.querySelectorAll('[data-remove-kind]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var name = el.getAttribute('data-remove-kind');
+      if (state.containerKinds.length <= 1) return;
+      state.containerKinds = state.containerKinds.filter(function(k) { return k !== name; });
+      if (d.kind === name) d.kind = state.containerKinds[0] || '';
+      saveState();
+      renderModal();
+    });
+  });
+  modal.querySelector('[data-action="addKind"]').addEventListener('click', function() {
+    openTextPrompt(tr('addKindTitle'), tr('addKindHint'), function(name) {
+      if (state.containerKinds.indexOf(name) === -1) { state.containerKinds.push(name); saveState(); }
+      d.kind = name;
+      renderModal();
+    });
+  });
+
+  modal.querySelectorAll('[data-size]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var v = el.getAttribute('data-size');
+      d.size = d.size === v ? '' : v; // повторний тап знімає розмір
+      renderModal();
+    });
+  });
+  modal.querySelectorAll('[data-remove-size]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var name = el.getAttribute('data-remove-size');
+      state.sizes = state.sizes.filter(function(x) { return x !== name; });
+      if (d.size === name) d.size = '';
+      saveState();
+      renderModal();
+    });
+  });
+  modal.querySelector('[data-action="addSize"]').addEventListener('click', function() {
+    openTextPrompt(tr('addSizeTitle'), tr('addSizeHint'), function(name) {
+      if (state.sizes.indexOf(name) === -1) { state.sizes.push(name); saveState(); }
+      d.size = name;
+      renderModal();
+    });
+  });
+
+  modal.querySelectorAll('[data-weight-preset]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      d.weight = Number(el.getAttribute('data-weight-preset'));
+      weightInput.value = d.weight;
+      weightInput.dispatchEvent(new Event('input'));
+    });
+  });
+  weightInput.addEventListener('input', function(e) {
+    d.weight = e.target.value === '' ? '' : Number(e.target.value);
+    refreshSummary();
+  });
+
+  if (countInput) {
+    countInput.addEventListener('input', function() { d.count = Math.max(0, Math.floor(Number(countInput.value) || 0)); refreshSummary(); });
+    modal.querySelector('[data-action="decCount"]').addEventListener('click', function() {
+      if (d.count > 0) d.count--;
+      countInput.value = d.count;
+      refreshSummary();
+    });
+    modal.querySelector('[data-action="incCount"]').addEventListener('click', function() {
+      d.count++;
+      countInput.value = d.count;
+      refreshSummary();
+    });
+  }
+  if (corrInput) {
+    corrInput.addEventListener('input', function() { d.correction = Number(corrInput.value) || 0; refreshSummary(); });
+  }
+
+  modal.querySelector('[data-action="save"]').addEventListener('click', function() {
+    var w = Number(d.weight);
+    if (d.weight === '' || !isFinite(w) || w <= 0) { fieldError(weightInput, tr('weightRequired')); return; }
+    if (isNew) {
+      addContainerType(w, d.kind, d.size);
+    } else {
+      updateContainerType(t.id, { weight: w, kind: d.kind, size: d.size });
+      setEventCount('container', t.id, d.count);
+      var delta = (Number(d.correction) || 0) - Calc.containerCorrectionKg(s, t.id);
+      if (delta) applyContainerCorrection(t.id, delta);
+      renderSessionView();
+    }
+    closeModal();
+  });
+
+  var delBtn = modal.querySelector('[data-action="delete"]');
+  if (delBtn) delBtn.addEventListener('click', function() {
+    if (!confirmTap(delBtn)) return;
+    removeContainerType(t.id);
+    closeModal();
+  });
+
+  if (isNew) setTimeout(function() { weightInput.focus(); }, 50);
 }
 
 function openPrepModal(prepId) {
-  var p = findPrep(prepId);
+  var s = state.session;
+  var p = s ? sessionPrep(s, prepId) : null;
   if (!p) return;
-  var canVol = state.session.canVolumes[prepId] || p.canVolume || 5;
   state.modal = {
     kind: 'prep',
-    prepId: prepId,
+    prepId: p.id,
     draft: {
-      canVolume: canVol
+      canVolume: Calc.sessionCanVolume(s, p.id, p.canVolume),
+      count: Calc.canisterCount(s, p.id),
+      correction: Calc.canisterCorrectionL(s, p.id)
     }
   };
   renderModal();
 }
 
-function renderModal() {
-  closeModalDom();
-  if (!state.modal) return;
-  var backdrop = document.createElement('div');
-  backdrop.id = 'modalRoot';
-  backdrop.className = 'modal-backdrop';
-  backdrop.addEventListener('click', function(e) {
-    if (e.target === backdrop) closeModal();
-  });
-
-  if (state.modal.kind === 'container') renderContainerModal(backdrop);
-  else if (state.modal.kind === 'prep') renderPrepModal(backdrop);
-  else if (state.modal.kind === 'textPrompt') renderTextPromptModal(backdrop);
-
-  document.body.appendChild(backdrop);
-  if (window._dbg) window._dbg('modal RENDERED, kind=' + state.modal.kind);
-}
-
-function renderContainerModal(backdrop) {
+function renderPrepModal(modal) {
   var m = state.modal;
-  var isNew = !m.typeId;
-  var t = isNew ? null : state.session.containerTypes.find(function(x) { return x.id === m.typeId; });
-  var cnt = !isNew && t ? containerCount(t.id) : 0;
-
-  var modal = document.createElement('div');
-  modal.className = 'modal';
-  var html = '';
-
-  html += '<div class="modal-header">';
-  html += '<div class="modal-title">' + (isNew ? tr('addContainerType') : tr('edit')) + '</div>';
-  html += '<button class="modal-close" data-action="close">✕</button>';
-  html += '</div>';
-
-  // Size chips — ПЕРШИМИ
-  html += '<div class="modal-section">';
-  html += '<label class="modal-label">' + tr('size') + '</label>';
-  html += '<div class="chip-row" data-role="sizeChips">';
-  state.sizes.forEach(function(sz) {
-    var sel = m.draft.size === sz ? 'selected' : '';
-    html += '<button class="chip ' + sel + '" data-size="' + escapeHtml(sz) + '">'
-      + escapeHtml(sz)
-      + '<span class="chip-remove" data-remove-size="' + escapeHtml(sz) + '">×</span>'
-      + '</button>';
-  });
-  html += '<button class="chip chip-add" data-action="addSize">+</button>';
-  html += '</div>';
-  html += '</div>';
-
-  // Kind chips — ДРУГИМИ
-  html += '<div class="modal-section">';
-  html += '<label class="modal-label">' + tr('kind') + '</label>';
-  html += '<div class="chip-row" data-role="kindChips">';
-  state.containerKinds.forEach(function(k) {
-    var sel = m.draft.kind === k ? 'selected' : '';
-    var isPermanent = PERMANENT_KINDS.indexOf(k) !== -1;
-    html += '<button class="chip ' + sel + '" data-kind="' + escapeHtml(k) + '">'
-      + escapeHtml(k)
-      + (isPermanent ? '' : '<span class="chip-remove" data-remove-kind="' + escapeHtml(k) + '">×</span>')
-      + '</button>';
-  });
-  html += '<button class="chip chip-add" data-action="addKind">+</button>';
-  html += '</div>';
-  html += '</div>';
-
-  // Weight — ТРЕТЬОЮ
-  html += '<div class="modal-section">';
-  html += '<label class="modal-label">' + tr('weight') + '</label>';
-  html += '<div class="modal-row">';
-  html += '<input type="number" inputmode="decimal" class="modal-input text-right" data-role="weight" value="' + (m.draft.weight || '') + '" placeholder="1000">';
-  html += '<span class="unit-tag">' + tr('kg') + '</span>';
-  html += '</div>';
-  html += '<div class="chip-row" style="margin-top:8px;">';
-  SESSION_PRESETS.forEach(function(p) {
-    html += '<button class="chip" data-weight-preset="' + p + '">' + p + '</button>';
-  });
-  html += '</div>';
-  html += '</div>';
-
-  // Counter and correction (only for existing type)
-  if (!isNew) {
-    var corrKg = containerCorrectionKg(t.id);
-    var totalKg = cnt * t.weight + corrKg;
-    html += '<div class="modal-section" style="padding-top:14px;border-top:1px solid var(--border);">';
-    html += '<label class="modal-label">' + tr('countUnits') + '</label>';
-    html += '<div class="counter-row">';
-    html += '<button class="counter-btn" data-action="decCount">−</button>';
-    html += '<input type="number" inputmode="numeric" class="counter-value" data-role="count" value="' + cnt + '">';
-    html += '<button class="counter-btn" data-action="incCount">+</button>';
-    html += '</div>';
-    html += '</div>';
-
-    html += '<div class="modal-section">';
-    html += '<label class="modal-label">' + tr('correctionKg') + '</label>';
-    html += '<div class="modal-row">';
-    html += '<input type="number" inputmode="numeric" class="modal-input text-right" data-role="correction" value="' + (corrKg || '') + '" placeholder="±N">';
-    html += '<span class="unit-tag">' + tr('kg') + '</span>';
-    html += '</div>';
-    html += '<div class="modal-hint">' + tr('correctionHintKg') + '</div>';
-    html += '<div class="summary-line">';
-    html += '<span data-role="summaryCount">' + cnt + '</span> × ' + fmtNum(t.weight) + ' ';
-    html += '<span data-role="summarySign">' + (corrKg >= 0 ? '+' : '−') + '</span> ';
-    html += '<span data-role="summaryCorr">' + fmtNum(Math.abs(corrKg)) + '</span> = ';
-    html += '<strong data-role="summaryTotal">' + fmtNum(totalKg) + '</strong> ' + tr('kg');
-    html += '</div>';
-    html += '</div>';
-  }
-
-  // Actions
-  html += '<div class="modal-actions">';
-  html += '<button class="btn btn-secondary" data-action="close">' + tr('cancelBtn') + '</button>';
-  html += '<button class="btn btn-primary" data-action="save">' + tr('saveBtn') + '</button>';
-  html += '</div>';
-
-  // Delete (only for existing)
-  if (!isNew) {
-    html += '<button class="modal-delete-btn confirm-btn" data-action="delete">';
-    html += '✕ ' + tr('deleteType') + (cnt > 0 ? ' (' + cnt + ' ' + tr('pcs') + ')' : '');
-    html += '</button>';
-  }
-
-  modal.innerHTML = html;
-  backdrop.appendChild(modal);
-
-  attachContainerModalHandlers(modal, isNew, t);
-}
-
-function attachContainerModalHandlers(modal, isNew, t) {
-  var m = state.modal;
-
-  modal.querySelectorAll('[data-action="close"]').forEach(function(el) {
-    el.addEventListener('click', closeModal);
-  });
-
-  // Kind chips
-  modal.querySelectorAll('[data-kind]').forEach(function(el) {
-    el.addEventListener('click', function(e) {
-      if (e.target.closest('[data-remove-kind]')) return; // handled below
-      m.draft.kind = el.getAttribute('data-kind');
-      modal.querySelectorAll('[data-kind]').forEach(function(b) {
-        b.classList.toggle('selected', b.getAttribute('data-kind') === m.draft.kind);
-      });
-    });
-  });
-
-  modal.querySelectorAll('[data-remove-kind]').forEach(function(el) {
-    el.addEventListener('click', function(e) {
-      e.stopPropagation();
-      var name = el.getAttribute('data-remove-kind');
-      state.containerKinds = state.containerKinds.filter(function(k) { return k !== name; });
-      if (m.draft.kind === name) m.draft.kind = state.containerKinds[0] || '';
-      saveState();
-      renderModal();
-    });
-  });
-
-  modal.querySelector('[data-action="addKind"]').addEventListener('click', function() {
-    openTextPrompt(tr('addKindTitle'), tr('addKindHint'), function(name) {
-      if (state.containerKinds.indexOf(name) === -1) {
-        state.containerKinds.push(name);
-        saveState();
-      }
-      m.draft.kind = name;
-      renderModal();
-    });
-  });
-
-  // Weight presets
-  modal.querySelectorAll('[data-weight-preset]').forEach(function(el) {
-    el.addEventListener('click', function() {
-      var w = Number(el.getAttribute('data-weight-preset'));
-      m.draft.weight = w;
-      var inp = modal.querySelector('[data-role="weight"]');
-      if (inp) inp.value = w;
-    });
-  });
-
-  modal.querySelector('[data-role="weight"]').addEventListener('input', function(e) {
-    m.draft.weight = e.target.value === '' ? '' : Number(e.target.value);
-  });
-
-  // Size chips
-  modal.querySelectorAll('[data-size]').forEach(function(el) {
-    el.addEventListener('click', function(e) {
-      if (e.target.closest('[data-remove-size]')) return;
-      m.draft.size = el.getAttribute('data-size');
-      modal.querySelectorAll('[data-size]').forEach(function(b) {
-        b.classList.toggle('selected', b.getAttribute('data-size') === m.draft.size);
-      });
-    });
-  });
-
-  modal.querySelectorAll('[data-remove-size]').forEach(function(el) {
-    el.addEventListener('click', function(e) {
-      e.stopPropagation();
-      var name = el.getAttribute('data-remove-size');
-      state.sizes = state.sizes.filter(function(s) { return s !== name; });
-      if (m.draft.size === name) m.draft.size = '';
-      saveState();
-      renderModal();
-    });
-  });
-
-  modal.querySelector('[data-action="addSize"]').addEventListener('click', function() {
-    openTextPrompt(tr('addSizeTitle'), tr('addSizeHint'), function(name) {
-      if (state.sizes.indexOf(name) === -1) {
-        state.sizes.push(name);
-        saveState();
-      }
-      m.draft.size = name;
-      renderModal();
-    });
-  });
-
-  // Counter (− N +) and live summary
-  var countInput = modal.querySelector('[data-role="count"]');
-  var corrInputEl = modal.querySelector('[data-role="correction"]');
-  var sumCountEl = modal.querySelector('[data-role="summaryCount"]');
-  var sumSignEl = modal.querySelector('[data-role="summarySign"]');
-  var sumCorrEl = modal.querySelector('[data-role="summaryCorr"]');
-  var sumTotalEl = modal.querySelector('[data-role="summaryTotal"]');
-
-  function refreshSummary() {
-    if (!sumTotalEl || !t) return;
-    var c = Number(countInput.value) || 0;
-    var corr = Number(corrInputEl.value) || 0;
-    var w = Number(modal.querySelector('[data-role="weight"]').value) || t.weight;
-    var total = c * w + corr;
-    sumCountEl.textContent = c;
-    sumSignEl.textContent = corr >= 0 ? '+' : '−';
-    sumCorrEl.textContent = fmtNum(Math.abs(corr));
-    sumTotalEl.textContent = fmtNum(total);
-  }
-
-  if (countInput) {
-    countInput.addEventListener('input', refreshSummary);
-    var decBtn = modal.querySelector('[data-action="decCount"]');
-    var incBtn = modal.querySelector('[data-action="incCount"]');
-    if (decBtn) decBtn.addEventListener('click', function() {
-      var v = Number(countInput.value) || 0;
-      if (v > 0) v--;
-      countInput.value = v;
-      refreshSummary();
-    });
-    if (incBtn) incBtn.addEventListener('click', function() {
-      var v = Number(countInput.value) || 0;
-      v++;
-      countInput.value = v;
-      refreshSummary();
-    });
-  }
-  if (corrInputEl) {
-    corrInputEl.addEventListener('input', refreshSummary);
-  }
-  modal.querySelector('[data-role="weight"]').addEventListener('input', refreshSummary);
-
-  // Save
-  modal.querySelector('[data-action="save"]').addEventListener('click', function() {
-    var w = Number(m.draft.weight);
-    if (!isFinite(w) || w <= 0) {
-      modal.querySelector('[data-role="weight"]').focus();
-      return;
-    }
-    if (isNew) {
-      addContainerType(w, m.draft.kind, m.draft.size);
-    } else {
-      updateContainerType(t.id, { weight: w, kind: m.draft.kind, size: m.draft.size });
-      // Apply count change (if user changed via counter)
-      if (countInput) {
-        var newCount = Number(countInput.value);
-        if (isFinite(newCount) && newCount >= 0) {
-          setContainerCount(t.id, newCount);
-        }
-      }
-      // Apply correction (replace existing correction with new value)
-      if (corrInputEl) {
-        var newCorr = Number(corrInputEl.value) || 0;
-        var oldCorr = containerCorrectionKg(t.id);
-        var deltaToApply = newCorr - oldCorr;
-        if (deltaToApply !== 0) {
-          applyContainerCorrection(t.id, deltaToApply);
-        }
-      }
-    }
-    closeModal();
-    renderSessionView();
-  });
-
-  // Delete
-  if (!isNew) {
-    var delBtn = modal.querySelector('[data-action="delete"]');
-    if (delBtn) armConfirmButton(delBtn, function() {
-      removeContainerType(t.id);
-      closeModal();
-    });
-  }
-}
-
-function renderPrepModal(backdrop) {
-  var m = state.modal;
-  var p = findPrep(m.prepId);
+  var s = state.session;
+  var p = sessionPrep(s, m.prepId);
   if (!p) { closeModal(); return; }
-  var cnt = canisterCount(m.prepId);
-  var canVol = m.draft.canVolume;
-  var corrL = canisterCorrectionL(m.prepId);
-  var liters = sessionPrepLiters(m.prepId);
+  var d = m.draft;
 
-  var modal = document.createElement('div');
-  modal.className = 'modal';
-  var html = '';
-
-  html += '<div class="modal-header">';
-  html += '<div class="modal-title">' + escapeHtml(p.name) + '</div>';
-  html += '<button class="modal-close" data-action="close">✕</button>';
-  html += '</div>';
-
-  // Canister volume
-  html += '<div class="modal-section">';
-  html += '<label class="modal-label">' + tr('canVolume') + '</label>';
-  html += '<div class="modal-row">';
-  html += '<input type="number" inputmode="decimal" class="modal-input text-right" data-role="canVol" value="' + canVol + '">';
-  html += '<span class="unit-tag">' + tr('liter') + '</span>';
-  html += '</div>';
-  html += '</div>';
-
-  // Count (− N +)
-  html += '<div class="modal-section" style="padding-top:14px;border-top:1px solid var(--border);">';
-  html += '<label class="modal-label">' + tr('countUnits') + '</label>';
-  html += '<div class="counter-row">';
-  html += '<button class="counter-btn" data-action="decCount">−</button>';
-  html += '<input type="number" inputmode="numeric" class="counter-value" data-role="count" value="' + cnt + '">';
-  html += '<button class="counter-btn" data-action="incCount">+</button>';
-  html += '</div>';
-  html += '</div>';
-
-  // Correction (L)
-  html += '<div class="modal-section">';
-  html += '<label class="modal-label">' + tr('correctionL') + '</label>';
-  html += '<div class="modal-row">';
-  html += '<input type="number" inputmode="decimal" class="modal-input text-right" data-role="correction" value="' + (corrL || '') + '" placeholder="±N">';
-  html += '<span class="unit-tag">' + tr('liter') + '</span>';
-  html += '</div>';
+  var html = modalHeader(p.name);
+  html += '<div class="modal-section field"><label class="modal-label" for="prCan">' + tr('canVolume') + '</label>';
+  html += '<div class="modal-row"><input id="prCan" type="number" inputmode="decimal" min="0" class="modal-input text-right" data-role="canVol" value="' + d.canVolume + '">';
+  html += '<span class="unit-tag">' + tr('liter') + '</span></div></div>';
+  html += '<div class="modal-section modal-section-sep"><div class="modal-label">' + tr('countUnits') + '</div>' + counterHtml(d.count) + '</div>';
+  html += '<div class="modal-section field"><label class="modal-label" for="prCorr">' + tr('correctionL') + '</label>';
+  html += '<div class="modal-row"><input id="prCorr" type="number" inputmode="decimal" class="modal-input text-right" data-role="correction" value="' + (d.correction || '') + '" placeholder="±N">';
+  html += '<span class="unit-tag">' + tr('liter') + '</span></div>';
   html += '<div class="modal-hint">' + tr('correctionHintKg') + '</div>';
-  html += '<div class="summary-line">';
-  html += '<span data-role="summaryCount">' + cnt + '</span> × <span data-role="summaryVol">' + canVol + '</span> ';
-  html += '<span data-role="summarySign">' + (corrL >= 0 ? '+' : '−') + '</span> ';
-  html += '<span data-role="summaryCorr">' + fmtNum(Math.abs(corrL), corrL % 1 ? 1 : 0) + '</span> = ';
-  html += '<strong data-role="summaryTotal">' + fmtNum(liters, liters % 1 ? 1 : 0) + '</strong> ' + tr('liter');
+  html += '<div class="summary-line" data-role="summary"></div>';
   html += '</div>';
-  html += '</div>';
-
-  // Actions
   html += '<div class="modal-actions">';
   html += '<button class="btn btn-secondary" data-action="close">' + tr('cancelBtn') + '</button>';
   html += '<button class="btn btn-primary" data-action="save">' + tr('saveBtn') + '</button>';
   html += '</div>';
-
-  html += '<button class="modal-delete-btn confirm-btn" data-action="remove">';
-  html += '✕ ' + tr('removeFromSession') + (cnt > 0 ? ' (' + cnt + ' кан)' : '');
-  html += '</button>';
-
+  html += '<button class="modal-delete-btn confirm-btn" data-action="remove">✕ ' + tr('removeFromSession') + (d.count > 0 ? ' (' + d.count + ' ' + tr('canShort') + ')' : '') + '</button>';
   modal.innerHTML = html;
-  backdrop.appendChild(modal);
 
   var canVolInput = modal.querySelector('[data-role="canVol"]');
   var countInput = modal.querySelector('[data-role="count"]');
-  var corrInputEl = modal.querySelector('[data-role="correction"]');
-  var sumCountEl = modal.querySelector('[data-role="summaryCount"]');
-  var sumVolEl = modal.querySelector('[data-role="summaryVol"]');
-  var sumSignEl = modal.querySelector('[data-role="summarySign"]');
-  var sumCorrEl = modal.querySelector('[data-role="summaryCorr"]');
-  var sumTotalEl = modal.querySelector('[data-role="summaryTotal"]');
+  var corrInput = modal.querySelector('[data-role="correction"]');
+  var summaryEl = modal.querySelector('[data-role="summary"]');
 
   function refreshSummary() {
-    var c = Number(countInput.value) || 0;
-    var v = Number(canVolInput.value) || 0;
-    var corr = Number(corrInputEl.value) || 0;
-    var total = c * v + corr;
-    sumCountEl.textContent = c;
-    sumVolEl.textContent = v;
-    sumSignEl.textContent = corr >= 0 ? '+' : '−';
-    sumCorrEl.textContent = fmtNum(Math.abs(corr), Math.abs(corr) % 1 ? 1 : 0);
-    sumTotalEl.textContent = fmtNum(total, total % 1 ? 1 : 0);
+    var v = Number(d.canVolume) || 0;
+    var corr = Number(d.correction) || 0;
+    var total = d.count * v + corr;
+    var f = d.count + ' × ' + v;
+    if (corr) f += ' ' + (corr > 0 ? '+' : '−') + ' ' + fmtLiters(Math.abs(corr));
+    summaryEl.innerHTML = f + ' = <strong>' + fmtLiters(total) + '</strong> ' + tr('liter');
   }
+  refreshSummary();
 
-  canVolInput.addEventListener('input', refreshSummary);
-  countInput.addEventListener('input', refreshSummary);
-  corrInputEl.addEventListener('input', refreshSummary);
-
+  canVolInput.addEventListener('input', function() { d.canVolume = canVolInput.value === '' ? '' : Number(canVolInput.value); refreshSummary(); });
+  countInput.addEventListener('input', function() { d.count = Math.max(0, Math.floor(Number(countInput.value) || 0)); refreshSummary(); });
+  corrInput.addEventListener('input', function() { d.correction = Number(corrInput.value) || 0; refreshSummary(); });
   modal.querySelector('[data-action="decCount"]').addEventListener('click', function() {
-    var v = Number(countInput.value) || 0;
-    if (v > 0) v--;
-    countInput.value = v;
+    if (d.count > 0) d.count--;
+    countInput.value = d.count;
     refreshSummary();
   });
   modal.querySelector('[data-action="incCount"]').addEventListener('click', function() {
-    var v = Number(countInput.value) || 0;
-    v++;
-    countInput.value = v;
+    d.count++;
+    countInput.value = d.count;
     refreshSummary();
   });
-
-  modal.querySelectorAll('[data-action="close"]').forEach(function(el) {
-    el.addEventListener('click', closeModal);
-  });
+  modal.querySelectorAll('[data-action="close"]').forEach(function(el) { el.addEventListener('click', closeModal); });
 
   modal.querySelector('[data-action="save"]').addEventListener('click', function() {
-    var newCan = Number(canVolInput.value);
-    if (!isFinite(newCan) || newCan <= 0) { canVolInput.focus(); return; }
-    state.session.canVolumes[m.prepId] = newCan;
-
-    // Apply count change
-    var newCount = Number(countInput.value);
-    if (isFinite(newCount) && newCount >= 0) {
-      setCanisterCount(m.prepId, newCount);
-    }
-
-    // Apply correction (replace existing with new value)
-    var newCorr = Number(corrInputEl.value) || 0;
-    var oldCorr = canisterCorrectionL(m.prepId);
-    var deltaToApply = newCorr - oldCorr;
-    if (deltaToApply !== 0) {
-      applyCanisterCorrection(m.prepId, deltaToApply);
-    }
-
+    var newCan = Number(d.canVolume);
+    if (d.canVolume === '' || !isFinite(newCan) || newCan <= 0) { fieldError(canVolInput, tr('canRequired')); return; }
+    s.canVolumes[p.id] = newCan;
+    setEventCount('canister', p.id, d.count);
+    var delta = (Number(d.correction) || 0) - Calc.canisterCorrectionL(s, p.id);
+    if (delta) applyCanisterCorrection(p.id, delta);
     saveState();
     closeModal();
     renderSessionView();
   });
 
   var rmBtn = modal.querySelector('[data-action="remove"]');
-  if (rmBtn) armConfirmButton(rmBtn, function() {
-    removePrepFromSession(m.prepId);
+  rmBtn.addEventListener('click', function() {
+    if (!confirmTap(rmBtn)) return;
+    removePrepFromSession(p.id);
     closeModal();
   });
 }
 
-// ── HISTORY VIEW ────────────────────────────────────────────────────────────
+// Просте підтвердження: { title, text, okLabel, onOk }
+function openConfirmModal(opts) {
+  state.modal = { kind: 'confirm', opts: opts };
+  renderModal();
+}
+
+function renderConfirmModal(modal) {
+  var o = state.modal.opts;
+  modal.classList.add('modal-small');
+  modal.innerHTML = modalHeader(o.title)
+    + '<div class="modal-section modal-text">' + escapeHtml(o.text) + '</div>'
+    + '<div class="modal-actions"><button class="btn btn-secondary" data-action="close">' + tr('cancelBtn') + '</button>'
+    + '<button class="btn btn-primary" data-action="ok">' + escapeHtml(o.okLabel) + '</button></div>';
+  modal.querySelectorAll('[data-action="close"]').forEach(function(el) { el.addEventListener('click', closeModal); });
+  modal.querySelector('[data-action="ok"]').addEventListener('click', function() { closeModal(); o.onOk(); });
+}
+
+// ── Історія ─────────────────────────────────────────────────────────────────
 
 function deleteSessionFromHistory(sessionId) {
   state.sessions = state.sessions.filter(function(s) { return s.id !== sessionId; });
@@ -2327,186 +2244,193 @@ function deleteSessionFromHistory(sessionId) {
 }
 
 function renderHistoryView() {
-  var root = document.getElementById('historyView');
-  if (!root) return;
-
-  var html = '';
-  html += '<div class="session-header">';
-  html += '<button class="session-back" data-action="back">' + tr('backBtn') + '</button>';
-  html += '<div class="session-title">' + tr('sessionsList') + '</div>';
-  html += '<span style="width:60px;"></span>';
-  html += '</div>';
+  var root = $('historyView');
+  var html = sessionHeader('<button class="session-back" data-action="back">' + tr('backBtn') + '</button>', tr('sessionsList'));
 
   if (state.sessions.length === 0) {
-    html += '<div style="text-align:center;color:var(--text-dim);padding:40px 20px;">' + tr('noSessions') + '</div>';
+    html += '<div class="history-empty">' + tr('noSessions') + '</div>';
   } else {
-    var sorted = state.sessions.slice().sort(function(a, b) {
-      return (b.endedAt || 0) - (a.endedAt || 0);
-    });
+    var sorted = state.sessions.slice().sort(function(a, b) { return (b.endedAt || 0) - (a.endedAt || 0); });
     sorted.forEach(function(s) {
-      var totalKg = 0;
-      s.containerTypes.forEach(function(t) {
-        totalKg += containerCount(t.id, s) * t.weight;
-      });
-      var totalContainers = s.events.filter(function(e) { return e.type === 'container'; }).length;
-      var corrSum = s.events.filter(function(e) { return e.type === 'container_corr'; })
-        .reduce(function(acc, e) { return acc + (e.delta || 0); }, 0);
-      totalContainers += corrSum;
-
       html += '<div class="history-row">';
-      html += '<div class="history-head">';
-      html += '<div class="history-num">' + tr('sessionNumber') + s.number + '</div>';
-      html += '<div class="history-date">' + fmtDate(s.startedAt) + '</div>';
-      html += '</div>';
-      if (s.variety) {
-        html += '<div style="font-size:13px;color:var(--text);margin-bottom:6px;">' + escapeHtml(s.variety) + '</div>';
-      }
-      html += '<div class="history-meta">';
-      html += '<span><strong>' + fmtNum(totalKg) + '</strong> ' + tr('kg') + '</span>';
-      html += '<span>' + totalContainers + ' ' + tr('pcs') + '</span>';
-      html += '</div>';
+      html += '<button class="history-main" data-action="view" data-id="' + s.id + '">';
+      html += '<span class="history-head"><span class="history-num">' + tr('sessionNumber') + s.number + '</span><span class="history-date">' + fmtDate(s.startedAt) + '</span></span>';
+      if (s.variety) html += '<span class="history-variety">' + escapeHtml(s.variety) + '</span>';
+      html += '<span class="history-meta"><span><strong>' + fmtNum(Calc.sessionTotalKg(s)) + '</strong> ' + tr('kg') + '</span>';
+      html += '<span>' + Calc.sessionContainers(s) + ' ' + tr('pcs') + ' · ' + fmtTime(Calc.sessionElapsedMs(s, Date.now())) + '</span></span>';
+      html += '</button>';
       html += '<div class="history-actions">';
-      html += '<button data-view-session="' + s.id + '">' + tr('viewSession') + '</button>';
-      html += '<button class="del confirm-btn" data-delete-session="' + s.id + '">✕</button>';
-      html += '</div>';
-      html += '</div>';
+      html += '<button data-action="view" data-id="' + s.id + '">' + tr('viewSession') + '</button>';
+      html += '<button class="del confirm-btn" data-action="delete" data-id="' + s.id + '" data-confirm="1" aria-label="' + escapeHtml(tr('deleteSession')) + '">✕</button>';
+      html += '</div></div>';
     });
   }
-
   root.innerHTML = html;
-
-  root.querySelector('[data-action="back"]').addEventListener('click', function() {
-    state.view = 'main';
-    renderViews();
-  });
-
-  root.querySelectorAll('[data-view-session]').forEach(function(el) {
-    el.addEventListener('click', function() {
-      var sid = el.getAttribute('data-view-session');
-      var s = state.sessions.find(function(x) { return x.id === sid; });
-      if (!s) return;
-      // Clone into state.session for viewing in completed mode
-      state.session = JSON.parse(JSON.stringify(s));
-      state.view = 'session';
-      renderViews();
-    });
-  });
-
-  root.querySelectorAll('[data-delete-session]').forEach(function(el) {
-    armConfirmButton(el, function() {
-      deleteSessionFromHistory(el.getAttribute('data-delete-session'));
-    });
-  });
 }
+
+function onHistoryViewClick(e) {
+  var btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  var action = btn.getAttribute('data-action');
+  var id = btn.getAttribute('data-id');
+  if (action === 'back') { state.view = 'main'; renderViews(); return; }
+  if (action === 'view') {
+    if (!state.sessions.some(function(x) { return x.id === id; })) return;
+    state.viewingSessionId = id;   // активна сесія лишається недоторканою
+    state.view = 'session';
+    renderViews();
+    return;
+  }
+  if (action === 'delete') {
+    if (!confirmTap(btn)) return;
+    deleteSessionFromHistory(id);
+  }
+}
+
+// ── Експорт / імпорт ────────────────────────────────────────────────────────
+
+function exportData() {
+  var payload = { app: 'spreya', format: 1, version: APP_VERSION, exportedAt: new Date().toISOString(), data: serializeState() };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'spreya-' + fmtDateISO(Date.now()) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+function importDataFromFile(file) {
+  var reader = new FileReader();
+  reader.onload = function() {
+    var parsed;
+    try { parsed = JSON.parse(reader.result); } catch (e) { showToast(tr('importBad')); return; }
+    var data = parsed && parsed.app === 'spreya' && parsed.data ? parsed.data : parsed;
+    if (!data || typeof data !== 'object' || !Array.isArray(data.preparations)) { showToast(tr('importBad')); return; }
+    var sessions = Array.isArray(data.sessions) ? data.sessions.length : 0;
+    openConfirmModal({
+      title: tr('importTitle'),
+      text: tr('importConfirm') + ' ' + trf('importSummary', { sessions: sessions, preps: data.preparations.length }),
+      okLabel: tr('replaceBtn'),
+      onOk: function() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) { showToast(tr('importBad')); return; }
+        location.reload();
+      }
+    });
+  };
+  reader.readAsText(file);
+}
+
+// ── Service worker ──────────────────────────────────────────────────────────
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+  navigator.serviceWorker.register('./sw.js').then(function(reg) {
+    // Є контролер — це оновлення; нема — перша установка (після неї працює офлайн).
+    var hadController = !!navigator.serviceWorker.controller;
+    reg.addEventListener('updatefound', function() {
+      var w = reg.installing;
+      if (!w) return;
+      w.addEventListener('statechange', function() {
+        if (w.state !== 'installed') return;
+        if (hadController) {
+          showToast(tr('newVersion'), { label: tr('reloadBtn'), onClick: function() { location.reload(); } }, true);
+        } else {
+          showToast(tr('offlineReady'));
+        }
+      });
+    });
+  }).catch(function() { /* без SW застосунок теж працює */ });
+}
+
+// ── Ініціалізація ───────────────────────────────────────────────────────────
 
 function init() {
   loadState();
-  applyTheme();
-  renderI18n();
-  renderTimer();
-  renderStreams();
-  renderManualInput();
-  renderPreparations();
-  updateSpeedDisplay();
-  renderSessionEntry();
+  ensureStreams();
+  renderAll();
 
-  // If stopwatch was running when app was closed/backgrounded — resume it.
   if (state.timer.running && state.timer.startMs) {
     clearInterval(timerInterval);
     timerInterval = setInterval(tickTimer, 100);
     acquireWakeLock();
-    renderTimer();
   }
+  if (state.session && state.session.startedAt && !state.session.endedAt) startSessionTicker();
 
-  // When the screen comes back on / tab becomes visible again:
-  //   1. Repaint immediately (don't wait up to 100 ms for next tick).
-  //   2. Re-acquire wake lock (it auto-releases when tab is hidden).
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState !== 'visible') return;
     if (state.timer.running && state.timer.startMs) {
       state.timer.elapsedMs = Date.now() - state.timer.startMs;
-      var d = document.getElementById('timerDisplay');
-      if (d) d.textContent = fmtTime(state.timer.elapsedMs);
+      $('timerDisplay').textContent = fmtTime(state.timer.elapsedMs);
       acquireWakeLock();
     }
+    if (state.view === 'main') renderSessionEntry();
   });
 
-  // If session is active and was paused-by-app-close (not user-paused),
-  // continue running. Persistent timer recovers correctly.
-  if (state.session && state.session.startedAt && !state.session.endedAt && !state.session.paused) {
-    startSessionTicker();
-  }
-
-  // Update session entry once a second to show running time
-  setInterval(function() {
-    if (state.view === 'main' && state.session && state.session.startedAt && !state.session.endedAt) {
-      renderSessionEntry();
-    }
-  }, 1000);
-
-  document.getElementById('sessionEntry').addEventListener('click', enterSessionView);
-
-  var histBtn = document.getElementById('historyEntry');
-  if (histBtn) histBtn.addEventListener('click', function() {
-    state.view = 'history';
-    renderViews();
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    if (state.prompt) { closePrompt(); return; }
+    if (state.modal) closeModal();
   });
 
-  document.getElementById('themeBtn').addEventListener('click', function() {
+  $('sessionEntry').addEventListener('click', enterSessionView);
+  $('historyEntry').addEventListener('click', function() { state.view = 'history'; renderViews(); });
+  $('sessionView').addEventListener('click', onSessionViewClick);
+  $('historyView').addEventListener('click', onHistoryViewClick);
+
+  $('themeBtn').addEventListener('click', function() {
     state.theme = state.theme === 'dark' ? 'light' : 'dark';
     saveState();
     applyTheme();
   });
 
-  document.getElementById('langToggle').addEventListener('click', function(e) {
+  $('langToggle').addEventListener('click', function(e) {
     var btn = e.target.closest('button[data-lang]');
-    if (!btn) return;
-    var newLang = btn.getAttribute('data-lang');
-    if (newLang === state.lang) return;
-    state.lang = newLang;
+    if (!btn || btn.getAttribute('data-lang') === state.lang) return;
+    state.lang = btn.getAttribute('data-lang');
     saveState();
-    renderI18n();
-    renderTimer();
-    renderStreams();
-    renderPreparations();
-    renderSessionEntry();
-    if (state.view === 'session') renderSessionView();
+    renderAll();
   });
 
-  document.getElementById('timerBtn').addEventListener('click', function() {
-    if (state.timer.running) lapTimer();
-    else startTimer();
-  });
+  $('timerBtn').addEventListener('click', onTimerBtn1);
+  $('timerBtn2').addEventListener('click', onTimerBtn2);
 
-  document.getElementById('resetBtn').addEventListener('click', resetTimer);
-
-  document.getElementById('addStreamBtn').addEventListener('click', function() {
-    if (state.streams.length >= 3) return;
-    state.streams.push({ id: Date.now(), before: '', after: '' });
+  $('addStreamBtn').addEventListener('click', function() {
+    if (state.streams.length >= MAX_STREAMS) return;
+    state.streams.push({ id: uid(), before: '', after: '' });
     renderStreams();
     updateSpeedDisplay();
+    saveState();
   });
 
-  document.getElementById('manualSpeed').addEventListener('input', function(e) {
+  $('speedMode').addEventListener('click', function(e) {
+    var btn = e.target.closest('button[data-mode]');
+    if (btn) setSpeedMode(btn.getAttribute('data-mode'));
+  });
+  $('speedHint').addEventListener('click', function() {
+    setSpeedMode(state.speedMode === 'manual' ? 'calc' : 'manual');
+  });
+  $('manualSpeed').addEventListener('input', function(e) {
     state.manualSpeed = Number(e.target.value) || 0;
+    state.speedMode = 'manual';
     saveState();
     updateSpeedDisplay();
   });
 
-  document.getElementById('manualSpeedVis').addEventListener('input', function(e) {
-    state.manualSpeed = Number(e.target.value) || 0;
-    var hidden = document.getElementById('manualSpeed');
-    if (hidden) hidden.value = state.manualSpeed || '';
-    saveState();
-    updateSpeedDisplay();
+  $('addPrepBtn').addEventListener('click', addPreparation);
+
+  $('exportBtn').addEventListener('click', exportData);
+  $('importBtn').addEventListener('click', function() { $('importFile').click(); });
+  $('importFile').addEventListener('change', function(e) {
+    var f = e.target.files && e.target.files[0];
+    if (f) importDataFromFile(f);
+    e.target.value = '';
   });
 
-  document.getElementById('addPrepBtn').addEventListener('click', function() {
-    var newId = Date.now();
-    state.preparations.push({ id: newId, name: '', norm: 250, canVolume: 5, active: true });
-    state.editingPrepId = newId;
-    renderPreparations();
-  });
+  $('appVersion').textContent = 'v' + APP_VERSION;
+  registerServiceWorker();
 }
 
 init();
