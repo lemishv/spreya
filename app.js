@@ -12,7 +12,7 @@ var MAX_VARIETIES = 10;
 
 var T = {
   uk: {
-    title: 'Спрея',
+    title: 'Spreya',
     potatoSpeed: 'Швидкість картоплі',
     start: 'СТАРТ',
     lap: 'КОЛО',
@@ -105,7 +105,7 @@ var T = {
     importTitle: 'Імпорт даних',
     importConfirm: 'Замінити всі поточні дані вмістом файлу?',
     importSummary: 'У файлі: {sessions} сесій, {preps} препаратів.',
-    importBad: 'Файл не схожий на експорт Спреї',
+    importBad: 'Файл не схожий на експорт Spreya',
     replaceBtn: 'Замінити',
     weightRequired: 'Вкажіть вагу ємкості',
     nameRequired: 'Вкажіть назву',
